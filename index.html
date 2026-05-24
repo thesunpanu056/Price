@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;padding:12px 8px max(40px,env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));font-size:17px}
+body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;padding:8px 4px max(40px,env(safe-area-inset-bottom));padding-left:max(4px,env(safe-area-inset-left));padding-right:max(4px,env(safe-area-inset-right));font-size:15px}
 
 #toolbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;position:sticky;top:6px;z-index:99;padding-top:env(safe-area-inset-top,0px)}
 .tbtn{padding:9px 18px;border:none;border-radius:10px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:all .15s}
@@ -21,10 +21,8 @@ body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;paddin
 .tbtn-cancel{background:linear-gradient(135deg,#e65100,#bf360c);color:#fff;display:none}
 .tbtn-a4{background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff}
 
-#editBanner{display:none;max-width:880px;margin:0 auto 8px;background:#fff8e1;border:1.5px solid #ffc107;border-radius:10px;padding:7px 16px;text-align:center;font-size:14px;color:#e65100;font-weight:600}
 
-#wrapper{max-width:880px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.16);display:grid;grid-template-columns:110px 1fr;grid-template-rows:auto 1fr;background:linear-gradient(to right,#1e1e2e 110px,#fff 110px)}
-#datebar{grid-column:1 / -1}
+#wrapper{max-width:880px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.16);display:flex;flex-direction:column;background:#fff}
 
 #datebar{background:linear-gradient(135deg,#1a237e,#283593,#303f9f);padding:14px 20px;display:flex;align-items:flex-start;justify-content:space-between;color:#fff;gap:10px;border-radius:16px 16px 0 0}
 #datebar h1{font-size:30px;font-weight:800;letter-spacing:1px}
@@ -39,47 +37,44 @@ body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;paddin
 .shop-inp.sl1{font-size:15px;font-weight:800}
 .shop-inp::placeholder{color:rgba(255,255,255,.42)}
 
-/* ── SIDEBAR NAV ── */
-#tab-bar{display:flex;flex-direction:column;background:#1e1e2e;border-right:1px solid rgba(255,255,255,.1);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:calc(16 * 72px);align-self:start;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
-#tab-bar::-webkit-scrollbar{width:3px}
-#tab-bar::-webkit-scrollbar-track{background:transparent}
-#tab-bar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
-#tab-bar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.4)}
-.tab-btn{width:100%;padding:11px 6px 9px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);background:transparent;border-right:3px solid transparent;transition:all .18s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-bottom:1px solid rgba(255,255,255,.06);touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,0);user-select:none;text-align:center}
+/* ── TOP TAB GRID ── */
+#tab-bar{display:grid;grid-template-columns:repeat(8,1fr);background:#1e1e2e;border-bottom:1px solid rgba(255,255,255,.12)}
+.tab-btn{padding:8px 2px 7px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.5);background:transparent;border-bottom:3px solid transparent;transition:all .18s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:1px solid rgba(255,255,255,.06);touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,0);user-select:none;text-align:center;min-height:52px}
+.tab-btn:last-child{border-right:none}
 .tab-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07)}
-.tab-btn.active{color:#fff;border-right-color:currentColor;background:rgba(255,255,255,.08)}
-.tab-btn .tbi{font-size:22px;line-height:1.1;display:block}
-.tab-btn .tbt{font-size:11px;word-break:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.3;text-align:center;display:block;max-width:98px}
-.tab-btn .tbn{font-size:10px;opacity:.45;font-weight:600;display:block}
+.tab-btn.active{color:#fff;border-bottom-color:currentColor;background:rgba(255,255,255,.08)}
+.tab-btn .tbi{font-size:18px;line-height:1.1;display:block}
+.tab-btn .tbt{font-size:10px;word-break:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.2;text-align:center;display:block;max-width:60px}
+.tab-btn .tbn{font-size:9px;opacity:.45;font-weight:600;display:block}
 .tab-btn:last-child{border-bottom:none}
-.tab-btn.active[data-grad="gh-rice1"]{color:#64b5f6;border-right-color:#64b5f6}
-.tab-btn.active[data-grad="gh-rice2"]{color:#81c784;border-right-color:#81c784}
-.tab-btn.active[data-grad="gh-egg"]  {color:#ffb74d;border-right-color:#ffb74d}
-.tab-btn.active[data-grad="gh-water"]{color:#4fc3f7;border-right-color:#4fc3f7}
-.tab-btn.active[data-grad="gh-beer"] {color:#ef9a9a;border-right-color:#ef9a9a}
-.tab-btn.active[data-grad="gh-liqc"] {color:#80cbc4;border-right-color:#80cbc4}
-.tab-btn.active[data-grad="gh-liqw"] {color:#ce93d8;border-right-color:#ce93d8}
-.tab-btn.active[data-grad="gh-liqr"] {color:#ffcc80;border-right-color:#ffcc80}
-.tab-btn.active[data-grad="gh-pink"] {color:#f48fb1;border-right-color:#f48fb1}
-.tab-btn.active[data-grad="gh-cyan"] {color:#80deea;border-right-color:#80deea}
-.tab-btn.active[data-grad="gh-lime"] {color:#aed581;border-right-color:#aed581}
-.tab-btn.active[data-grad="gh-indigo"]{color:#9fa8da;border-right-color:#9fa8da}
-.tab-btn.active[data-grad="gh-red"]    {color:#ef9a9a;border-right-color:#ef9a9a}
-.tab-btn.active[data-grad="gh-amber"]  {color:#ffab91;border-right-color:#ffab91}
-.tab-btn.active[data-grad="gh-yellow"] {color:#fff176;border-right-color:#fff176}
-.tab-btn.active[data-grad="gh-navy"]   {color:#7986cb;border-right-color:#7986cb}
-.tab-btn.active[data-grad="gh-violet"] {color:#b39ddb;border-right-color:#b39ddb}
-.tab-btn.active[data-grad="gh-gray-d"] {color:#b0bec5;border-right-color:#b0bec5}
-.tab-btn.active[data-grad="gh-gray"]   {color:#cfd8dc;border-right-color:#cfd8dc}
-.tab-btn.active[data-grad="gh-red-l"]  {color:#ffcdd2;border-right-color:#ffcdd2}
-.tab-btn.active[data-grad="gh-yellow-l"]{color:#fff9c4;border-right-color:#fff9c4}
-.tab-btn.active[data-grad="gh-green-l"]{color:#c8e6c9;border-right-color:#c8e6c9}
-.tab-btn.active[data-grad="gh-mint"]   {color:#b2dfdb;border-right-color:#b2dfdb}
-.tab-btn.active[data-grad="gh-sky"]    {color:#b3e5fc;border-right-color:#b3e5fc}
-.tab-btn.active[data-grad="gh-blue-l"] {color:#bbdefb;border-right-color:#bbdefb}
-.tab-btn.active[data-grad="gh-purple-l"]{color:#e1bee7;border-right-color:#e1bee7}
-.tab-btn.active[data-grad="gh-rose"]   {color:#fce4ec;border-right-color:#fce4ec}
-.tab-btn.active[data-grad="gh-gray-l"] {color:#eceff1;border-right-color:#eceff1}
+.tab-btn.active[data-grad="gh-rice1"]{color:#64b5f6;border-bottom-color:#64b5f6}
+.tab-btn.active[data-grad="gh-rice2"]{color:#81c784;border-bottom-color:#81c784}
+.tab-btn.active[data-grad="gh-egg"]  {color:#ffb74d;border-bottom-color:#ffb74d}
+.tab-btn.active[data-grad="gh-water"]{color:#4fc3f7;border-bottom-color:#4fc3f7}
+.tab-btn.active[data-grad="gh-beer"] {color:#ef9a9a;border-bottom-color:#ef9a9a}
+.tab-btn.active[data-grad="gh-liqc"] {color:#80cbc4;border-bottom-color:#80cbc4}
+.tab-btn.active[data-grad="gh-liqw"] {color:#ce93d8;border-bottom-color:#ce93d8}
+.tab-btn.active[data-grad="gh-liqr"] {color:#ffcc80;border-bottom-color:#ffcc80}
+.tab-btn.active[data-grad="gh-pink"] {color:#f48fb1;border-bottom-color:#f48fb1}
+.tab-btn.active[data-grad="gh-cyan"] {color:#80deea;border-bottom-color:#80deea}
+.tab-btn.active[data-grad="gh-lime"] {color:#aed581;border-bottom-color:#aed581}
+.tab-btn.active[data-grad="gh-indigo"]{color:#9fa8da;border-bottom-color:#9fa8da}
+.tab-btn.active[data-grad="gh-red"]    {color:#ef9a9a;border-bottom-color:#ef9a9a}
+.tab-btn.active[data-grad="gh-amber"]  {color:#ffab91;border-bottom-color:#ffab91}
+.tab-btn.active[data-grad="gh-yellow"] {color:#fff176;border-bottom-color:#fff176}
+.tab-btn.active[data-grad="gh-navy"]   {color:#7986cb;border-bottom-color:#7986cb}
+.tab-btn.active[data-grad="gh-violet"] {color:#b39ddb;border-bottom-color:#b39ddb}
+.tab-btn.active[data-grad="gh-gray-d"] {color:#b0bec5;border-bottom-color:#b0bec5}
+.tab-btn.active[data-grad="gh-gray"]   {color:#cfd8dc;border-bottom-color:#cfd8dc}
+.tab-btn.active[data-grad="gh-red-l"]  {color:#ffcdd2;border-bottom-color:#ffcdd2}
+.tab-btn.active[data-grad="gh-yellow-l"]{color:#fff9c4;border-bottom-color:#fff9c4}
+.tab-btn.active[data-grad="gh-green-l"]{color:#c8e6c9;border-bottom-color:#c8e6c9}
+.tab-btn.active[data-grad="gh-mint"]   {color:#b2dfdb;border-bottom-color:#b2dfdb}
+.tab-btn.active[data-grad="gh-sky"]    {color:#b3e5fc;border-bottom-color:#b3e5fc}
+.tab-btn.active[data-grad="gh-blue-l"] {color:#bbdefb;border-bottom-color:#bbdefb}
+.tab-btn.active[data-grad="gh-purple-l"]{color:#e1bee7;border-bottom-color:#e1bee7}
+.tab-btn.active[data-grad="gh-rose"]   {color:#fce4ec;border-bottom-color:#fce4ec}
+.tab-btn.active[data-grad="gh-gray-l"] {color:#eceff1;border-bottom-color:#eceff1}
 
 #tab-content{background:#fff;overflow:hidden;flex:1;min-width:0}
 
@@ -135,21 +130,39 @@ body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;paddin
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
-table{width:auto;min-width:100%;border-collapse:collapse;font-size:18px}
+table{width:100%;border-collapse:collapse;font-size:15px}
 thead tr{background:#f0f2f5}
-th{padding:12px 10px;font-weight:800;font-size:16px;color:#1a237e;border-bottom:2.5px solid #dee2e8;text-align:center;white-space:nowrap}
-th.al{text-align:center;padding-left:10px}
-td{padding:13px 10px;border-bottom:1px solid #f0f0f0;text-align:center;vertical-align:middle}
-td.al{text-align:center;padding-left:10px;padding-right:10px;font-weight:700;font-size:18px;color:#1a1a2e}
+th{padding:9px 6px;font-weight:800;font-size:13px;color:#1a237e;border-bottom:2px solid #dee2e8;text-align:center;white-space:nowrap}
+th.al{text-align:center;padding-left:6px}
+td{padding:9px 6px;border-bottom:1px solid #f0f0f0;text-align:center;vertical-align:middle;font-size:14px}
+td.al{text-align:center;padding-left:6px;font-weight:700;font-size:14px;color:#1a1a2e}
 tbody tr:last-child td{border-bottom:none}
-td.brand-cell{font-weight:900;font-size:18px;border-right:2.5px solid #dee2e8;vertical-align:middle;text-align:center;color:#1a237e;white-space:nowrap}
-tr.sep-row td{font-weight:800;font-size:15px;color:#444;padding:7px 16px;border-top:1px solid #e0e0e0}
-.v-set   {font-weight:900;color:#1565c0;font-size:24px}
-.v-retail{font-weight:900;color:#c62828;font-size:24px}
-.v-rate  {font-weight:900;color:#e65100;font-size:24px}
-.v-crate {font-weight:900;color:#2e7d32;font-size:24px}
-.v-cond  {font-size:16px;color:#666;font-weight:700}
-.v-dash  {color:#ccc;font-size:18px}
+td.brand-cell{font-weight:900;font-size:13px;border-right:2px solid #dee2e8;vertical-align:middle;text-align:center;color:#1a237e;white-space:nowrap;padding:8px 8px}
+tr.sep-row td{font-weight:800;font-size:13px;color:#444;padding:5px 12px;border-top:1px solid #e0e0e0}
+.v-set   {font-weight:900;color:#1565c0;font-size:18px}
+.v-retail{font-weight:900;color:#c62828;font-size:18px}
+.v-rate  {font-weight:900;color:#e65100;font-size:18px}
+.v-crate {font-weight:900;color:#2e7d32;font-size:18px}
+.v-cond  {font-size:12px;color:#666;font-weight:700}
+.v-dash  {color:#ccc;font-size:15px}
+/* มือถือ — ปรับเพิ่มเติม */
+@media(max-width:480px){
+  body{font-size:14px;padding:6px 4px max(32px,env(safe-area-inset-bottom));padding-left:max(4px,env(safe-area-inset-left));padding-right:max(4px,env(safe-area-inset-right))}
+  #wrapper{border-radius:10px}
+  .tab-btn{padding:7px 2px 6px;min-height:50px;font-size:10px}
+  .tab-btn .tbi{font-size:18px}
+  .tab-btn .tbn{font-size:9px}
+  th{font-size:11px;padding:7px 4px}
+  td{font-size:12px;padding:7px 4px}
+  td.al{font-size:12px;padding-left:4px}
+  td.brand-cell{font-size:11px;padding:6px 5px}
+  .v-set,.v-retail,.v-rate,.v-crate{font-size:16px}
+  .v-cond{font-size:11px}
+  .ch-title{font-size:22px}
+  .ch-icon{font-size:26px}
+  #datebar h1{font-size:24px}
+  .tbtn{padding:8px 12px;font-size:13px}
+}
 
 /* ── EDIT INPUTS ── */
 .ei{border:1.5px solid #1565c0;border-radius:5px;padding:3px 6px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;background:#e8f0fe;outline:none;width:100%;min-width:44px}
@@ -166,19 +179,6 @@ tr.sep-row td{font-weight:800;font-size:15px;color:#444;padding:7px 16px;border-
 .unit-sep{font-size:14px;color:#aaa;margin:0 3px;font-weight:400}
 .unit-tag{font-size:14px;color:#555;font-weight:700;background:#e8eaf6;border-radius:5px;padding:1px 8px;display:inline-block;vertical-align:middle;line-height:1.7;letter-spacing:.3px}
 
-/* ── BACKUP MODAL ── */
-#bkModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
-#bkModal.on{display:flex}
-#bkBox{background:#fff;border-radius:16px;padding:24px;width:min(520px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35);font-family:'Sarabun',sans-serif}
-#bkBox h3{font-size:18px;font-weight:800;color:#1a237e;margin-bottom:4px}
-#bkBox p{font-size:13px;color:#666;margin-bottom:12px}
-#bkTa{width:100%;height:120px;border:1.5px solid #bbb;border-radius:8px;padding:8px;font-family:'Sarabun',sans-serif;font-size:12px;resize:vertical;outline:none}
-#bkTa:focus{border-color:#1565c0}
-.bk-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.bk-btn{padding:9px 18px;border:none;border-radius:9px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700}
-.bk-copy{background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff}
-.bk-load{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff}
-.bk-close{background:#eee;color:#333;margin-left:auto}
 
 /* ── EXPORT MODAL ── */
 #expModal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))}
@@ -378,29 +378,13 @@ tr.sep-row td{font-weight:800;font-size:15px;color:#444;padding:7px 16px;border-
   </div>
 </div>
 
-<!-- Backup Modal -->
-<div id="bkModal" class="">
-  <div id="bkBox">
-    <h3>💾 บันทึก / โหลดข้อมูล</h3>
-    <p>คัดลอก code ด้านล่างเก็บไว้ใน Note หรือ LINE ตัวเอง เพื่อใช้กู้คืนข้อมูลในอุปกรณ์อื่น</p>
-    <textarea id="bkTa" placeholder="วางข้อมูลที่บันทึกไว้ที่นี่..."></textarea>
-    <div class="bk-btns">
-      <button class="bk-btn bk-copy" onclick="bkCopy()">📋 คัดลอกข้อมูล</button>
-      <button class="bk-btn bk-load" onclick="bkLoad()">📥 โหลดข้อมูล</button>
-      <button class="bk-btn bk-close" onclick="closeBk()">ปิด</button>
-    </div>
-  </div>
-</div>
 
 <div id="toolbar">
   <button class="tbtn tbtn-line" onclick="openExp()">📸 ส่ง LINE</button>
   <button class="tbtn tbtn-a4"  onclick="openA4()">🖨️ ใบราคา A4</button>
-  <button class="tbtn tbtn-edit" id="editBtn" onclick="toggleEdit()">✏️ แก้ไขราคา</button>
-  <button class="tbtn" style="background:linear-gradient(135deg,#37474f,#263238);color:#fff" onclick="openBk()">💾 บันทึก/โหลด</button>
-  <button class="tbtn" style="background:linear-gradient(135deg,#0f9d58,#137333);color:#fff" id="gsBtn" onclick="loadFromSheets()">🔄 โหลดจาก Sheets</button>
-  <button class="tbtn tbtn-cancel" id="cancelBtn" onclick="cancelEdit()">❌ ยกเลิกแก้ไข</button>
+  <button class="tbtn" style="background:linear-gradient(135deg,#0f9d58,#137333);color:#fff" id="gsBtn" onclick="loadFromSheets(false)">🔄 โหลดจาก Sheets</button>
 </div>
-<div id="editBanner">✏️ โหมดแก้ไข — คลิกที่ราคา / ชื่อสินค้าเพื่อแก้ไข | กด "เสร็จแก้ไข" เมื่อเสร็จ</div>
+<div id="syncBar" style="max-width:880px;margin:-4px auto 6px;text-align:right;padding:0 4px;font-size:12px;color:#888;min-height:18px"></div>
 <div id="wrapper">
   <div id="datebar">
     <div>
@@ -441,8 +425,6 @@ function isIOS(){
 // ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
-let editMode=false;
-let editSnapshot=null;
 let exportMode=false;
 let cats=load();
 let activeTab=0;
@@ -451,41 +433,6 @@ function load(){try{const s=localStorage.getItem('priceV6');if(s)return JSON.par
 function save(){localStorage.setItem('priceV6',JSON.stringify(cats));}
 
 // ── BACKUP MODAL ──────────────────────────────
-function openBk(){
-  const m=document.getElementById('bkModal');
-  document.getElementById('bkTa').value=JSON.stringify({cats,shopInfo,dateStr});
-  m.classList.add('on');
-}
-function closeBk(){document.getElementById('bkModal').classList.remove('on');}
-function bkCopy(){
-  const ta=document.getElementById('bkTa');
-  const btn=event.target;
-  const doFallback=()=>{
-    ta.focus();
-    ta.setSelectionRange(0,ta.value.length);
-    try{document.execCommand('copy');}catch(e){}
-    btn.textContent='✅ คัดลอกแล้ว!';
-    setTimeout(()=>btn.textContent='📋 คัดลอกข้อมูล',2000);
-  };
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(ta.value).then(()=>{
-      btn.textContent='✅ คัดลอกแล้ว!';
-      setTimeout(()=>btn.textContent='📋 คัดลอกข้อมูล',2000);
-    }).catch(doFallback);
-  }else{doFallback();}
-}
-function bkLoad(){
-  const raw=document.getElementById('bkTa').value.trim();
-  if(!raw)return alert('กรุณาวางข้อมูลก่อน');
-  try{
-    const d=JSON.parse(raw);
-    if(d.cats){cats=d.cats;save();}
-    if(d.shopInfo){shopInfo=d.shopInfo;localStorage.setItem('shopInfo6',JSON.stringify(shopInfo));}
-    if(d.dateStr){dateStr=d.dateStr;localStorage.setItem('pDate6',dateStr);}
-    closeBk();activeTab=0;render();
-    alert('✅ โหลดข้อมูลสำเร็จ!');
-  }catch(e){alert('❌ ข้อมูลไม่ถูกต้อง: '+e.message);}
-}
 
 // ══════════════════════════════════════════════
 //  GOOGLE SHEETS INTEGRATION
@@ -543,16 +490,19 @@ function gsFetch(sheetName,range='A3:Z2000'){
   });
 }
 
-async function loadFromSheets(){
+let _gsLoading=false;
+async function loadFromSheets(silent=false){
+  if(_gsLoading)return;
+  _gsLoading=true;
   const ov=document.getElementById('overlay');
   const msg=document.getElementById('ovMsg');
   const sub=document.getElementById('ovSub');
-  ov.classList.add('on');
-  msg.textContent='🔄 กำลังเชื่อม Google Sheets...';
-  sub.textContent='';
+  const syncBar=document.getElementById('syncBar');
+  if(!silent){ov.classList.add('on');msg.textContent='🔄 กำลังเชื่อม Google Sheets...';sub.textContent='';}
+  else{syncBar.textContent='🔄 กำลังอัปเดต...';}
   try{
     // 1. Load CONFIG sheet
-    msg.textContent='📋 โหลดรายการหมวดหมู่...';
+    if(!silent){msg.textContent='📋 โหลดรายการหมวดหมู่...';}
     const cfg=await gsFetch('หมวดหมู่');
     // cfg.rows: each row = [id, title, icon, grad, type, note]
     const newCats=[];
@@ -576,8 +526,9 @@ async function loadFromSheets(){
       const cat=newCats[ci];
       // ใช้แค่ชื่อหมวด (ไม่มี emoji) ให้ตรงกับชื่อ tab ใน Google Sheets
       const sName=cat.title;
-      msg.textContent='📦 โหลด '+cat.icon+' '+cat.title;
-      sub.textContent='('+(ci+1)+'/'+newCats.length+')';
+      if(!silent){msg.textContent='📦 โหลด '+cat.icon+' '+cat.title;sub.textContent='('+(ci+1)+'/'+newCats.length+')';}
+      else{syncBar.textContent='🔄 โหลด '+cat.icon+' '+cat.title+' ('+(ci+1)+'/'+newCats.length+')';}
+
       try{
         const d=await gsFetch(sName);
         // ตรวจจับว่าได้รับ config sheet กลับมาแทน product sheet
@@ -643,33 +594,32 @@ async function loadFromSheets(){
 
     cats=newCats;
     save();
-    activeTab=0;
+    if(!silent)activeTab=0;
     dateStr=thaiNow();
     localStorage.setItem('pDate6',dateStr);
-    ov.classList.remove('on');
+    if(!silent)ov.classList.remove('on');
     render();
-    // Show success banner briefly
-    const banner=document.getElementById('editBanner');
-    const prev=banner.innerHTML;
-    const prevDisplay=banner.style.display;
-    banner.style.display='block';
-    banner.style.background='#e8f5e9';
-    banner.style.borderColor='#4caf50';
-    banner.style.color='#1b5e20';
-    banner.innerHTML='✅ โหลดข้อมูลจาก Google Sheets สำเร็จ! <span style="font-weight:400;font-size:13px">('+newCats.length+' หมวด)</span>';
-    setTimeout(()=>{
-      banner.innerHTML=prev;
-      banner.style.display=editMode?'block':prevDisplay;
-      banner.style.background='';
-      banner.style.borderColor='';
-      banner.style.color='';
-    },3000);
+    // แสดงเวลาอัปเดตล่าสุดใน syncBar
+    const now=new Date();
+    const hh=now.getHours().toString().padStart(2,'0');
+    const mm2=now.getMinutes().toString().padStart(2,'0');
+    const ss=now.getSeconds().toString().padStart(2,'0');
+    syncBar.textContent='✅ อัปเดตล่าสุด '+hh+':'+mm2+':'+ss+(silent?' (auto)':' ('+newCats.length+' หมวด)');
   }catch(e){
-    ov.classList.remove('on');
-    alert('❌ โหลดจาก Google Sheets ไม่ได้\n\n'+e.message
-      +'\n\n📋 วิธีแก้:\n1. เปิด Google Sheet แล้วกด แชร์ → "ทุกคนที่มีลิงก์" (Anyone with link) → Viewer\n2. ตรวจสอบชื่อชีตว่าตรงกัน\n3. เชื่อมต่ออินเทอร์เน็ตอยู่');
+    if(!silent){
+      ov.classList.remove('on');
+      alert('❌ โหลดจาก Google Sheets ไม่ได้\n\n'+e.message
+        +'\n\n📋 วิธีแก้:\n1. เปิด Google Sheet แล้วกด แชร์ → "ทุกคนที่มีลิงก์" (Anyone with link) → Viewer\n2. ตรวจสอบชื่อชีตว่าตรงกัน\n3. เชื่อมต่ออินเทอร์เน็ตอยู่');
+    }else{
+      syncBar.textContent='⚠️ อัปเดตไม่สำเร็จ ('+new Date().toLocaleTimeString('th-TH')+')';
+    }
+  }finally{
+    _gsLoading=false;
   }
 }
+
+// ── AUTO REFRESH ทุก 10 นาที ──
+setInterval(()=>loadFromSheets(true),600000);
 
 // Shop info state
 let shopInfo=Object.assign({},DEF_SHOP);
@@ -693,7 +643,6 @@ function fmtVal(v,vc){
 // ══════════════════════════════════════════════
 function render(){
   document.getElementById('dateText').textContent=dateStr;
-  document.getElementById('editDateBtn').style.display=editMode?'block':'none';
   renderShopArea();
   renderTabs();
   renderContent();
@@ -702,19 +651,12 @@ function render(){
 function renderShopArea(){
   const a=document.getElementById('shopArea');
   if(!a)return;
-  if(editMode){
-    a.innerHTML=`
-      <input class="shop-inp sl1" value="${esc(shopInfo.line1)}" placeholder="ชื่อร้าน" oninput="shopInfo.line1=this.value;saveShop()">
-      <input class="shop-inp" value="${esc(shopInfo.line2)}" placeholder="บรรทัดที่ 2" oninput="shopInfo.line2=this.value;saveShop()">
-      <input class="shop-inp" value="${esc(shopInfo.line3)}" placeholder="บรรทัดที่ 3" oninput="shopInfo.line3=this.value;saveShop()">`;
-  }else{
-    let h='<div style="text-align:right">';
-    if(shopInfo.line1)h+=`<div class="shop-view-l1">${esc(shopInfo.line1)}</div>`;
-    if(shopInfo.line2)h+=`<div class="shop-view-l2">${esc(shopInfo.line2)}</div>`;
-    if(shopInfo.line3)h+=`<div class="shop-view-l3">${esc(shopInfo.line3)}</div>`;
-    h+='</div>';
-    a.innerHTML=h;
-  }
+  let h='<div style="text-align:right">';
+  if(shopInfo.line1)h+=`<div class="shop-view-l1">${esc(shopInfo.line1)}</div>`;
+  if(shopInfo.line2)h+=`<div class="shop-view-l2">${esc(shopInfo.line2)}</div>`;
+  if(shopInfo.line3)h+=`<div class="shop-view-l3">${esc(shopInfo.line3)}</div>`;
+  h+='</div>';
+  a.innerHTML=h;
 }
 
 function renderTabs(){
@@ -735,26 +677,9 @@ function renderContent(){
   const cat=cats[ci];
   const box=document.getElementById('tab-content');
   let h=`<div class="ch ${cat.grad}">`;
-  if(editMode){
-    h+=`<div class="ch-left">`;
-    h+=`<input class="ei-icon" value="${esc(cat.icon)}" title="เปลี่ยนอิโมติคอน" oninput="cats[${ci}].icon=this.value;save();renderTabs()">`;
-    h+=`<input class="ei-catname" value="${esc(cat.title)}" oninput="cats[${ci}].title=this.value;save();renderTabs()">`;
-    h+=`</div>`;
-  }else{
-    h+=`<div class="ch-left"><span class="ch-icon">${cat.icon}</span><span class="ch-title">${esc(cat.title)}</span></div>`;
-  }
+  h+=`<div class="ch-left"><span class="ch-icon">${cat.icon}</span><span class="ch-title">${esc(cat.title)}</span></div>`;
   h+=`<div class="ch-btns">`;
-  if(editMode){
-    h+=`<div class="ch-note-row">`;
-    h+=`<input class="ch-note-inp" value="${esc(cat.note||'')}" placeholder="📌 หมายเหตุ..." oninput="cats[${ci}].note=this.value;save()">`;
-    if(cat.note){
-      h+=`<button class="ch-note-del" onclick="cats[${ci}].note='';save();render()" title="ลบหมายเหตุ">✕</button>`;
-    }
-    h+=`</div>`;
-    h+=`<button class="btn-del-cat" onclick="delCat(${ci})">🗑 ลบหมวด</button>`;
-  }else{
-    if(cat.note) h+=`<span class="ch-note">📌 ${esc(cat.note)}</span>`;
-  }
+  if(cat.note) h+=`<span class="ch-note">📌 ${esc(cat.note)}</span>`;
   h+=`</div></div>`;
   h+=`<div class="tbl-wrap">`;
   h+= cat.type==='simple' ? buildSimple(cat,ci) : buildBrand(cat,ci);
@@ -764,26 +689,13 @@ function renderContent(){
 
 // ── SIMPLE TABLE ──────────────────────────────
 function buildSimple(cat,ci){
-  const UNITS=['ลัง','ขวด','ถุง','แผง','แพ็ค','ถาด'];
   const PVC=new Set(['v-set','v-rate','v-retail','v-crate']);
-  function uSel(ci2,ri,k,cur){
-    let s=`<select class="unit-sel" onchange="sv(${ci2},${ri},'${k}_u',this.value)"><option value="">– หน่วย –</option>`;
-    UNITS.forEach(u=>{s+=`<option value="${u}"${cur===u?' selected':''}>${u}</option>`;});
-    return s+`</select>`;
-  }
   let h=`<table><thead><tr>`;
-  cat.cols.forEach((c,colIdx)=>{
-    if(editMode){
-      h+=`<th class="${c.al?'al':''}" style="width:${c.w}"><input class="ei-th" value="${esc(c.lb)}" oninput="cats[${ci}].cols[${colIdx}].lb=this.value;save()">${cat.cols.length>1?`<button class="btn-del-col" onclick="delCol(${ci},${colIdx})" title="ลบคอลัม">✕</button>`:''}</th>`;
-    }else{
-      h+=`<th class="${c.al?'al':''}" style="width:${c.w}">${esc(c.lb)}</th>`;
-    }
-  });
-  if(editMode)h+=`<th style="width:46px;text-align:center"><button class="th-add-col" onclick="openColModal(${ci})" title="เพิ่มคอลัม">+</button></th>`;
+  cat.cols.forEach(c=>{h+=`<th class="${c.al?'al':''}" style="width:${c.w}">${esc(c.lb)}</th>`;});
   h+=`</tr></thead><tbody>`;
-  cat.rows.forEach((row,ri)=>{
+  cat.rows.forEach(row=>{
     if(row._s){
-      h+=`<tr class="sep-row"><td colspan="${cat.cols.length+(editMode?1:0)}" style="background:${row._bg||'#eee'};padding:5px 16px">${esc(row._lb)}</td></tr>`;
+      h+=`<tr class="sep-row"><td colspan="${cat.cols.length}" style="background:${row._bg||'#eee'};padding:5px 16px">${esc(row._lb)}</td></tr>`;
       return;
     }
     h+=`<tr style="background:${row._bg||'#fff'}">`;
@@ -791,65 +703,26 @@ function buildSimple(cat,ci){
       const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
       const u=row[c.k+'_u']||'';
       const isPrc=PVC.has(c.vc);
-      if(editMode){
-        h+=`<td class="${c.al?'al':''}"><input class="ei ${c.al?'ei-name':'ei-num'}" value="${esc(String(disp))}" oninput="sv(${ci},${ri},'${c.k}',this.value)">`;
-        if(isPrc)h+=uSel(ci,ri,c.k,u);
-        h+=`</td>`;
-      }else{
-        const tag=isPrc&&u?`<span class="unit-sep">/</span><span class="unit-tag">${esc(u)}</span>`:'';
-        h+=`<td class="${c.al?'al':''}">${fmtVal(disp,c.vc)}${tag}</td>`;
-      }
+      const tag=isPrc&&u?`<span class="unit-sep">/</span><span class="unit-tag">${esc(u)}</span>`:'';
+      h+=`<td class="${c.al?'al':''}">${fmtVal(disp,c.vc)}${tag}</td>`;
     });
-    if(editMode)h+=`<td style="white-space:nowrap"><button class="btn-move-row" onclick="openMvModal(${ci},${ri})" title="ย้ายบรรทัด">⇅</button><button class="btn-row-color" style="background:${row._bg||'#fff'}" onclick="openRcModal(${ci},${ri})" title="เปลี่ยนสีบรรทัด"></button><button class="btn-del-row" onclick="delRow(${ci},${ri})">✕</button></td>`;
     h+=`</tr>`;
   });
-  if(editMode)h+=`<tr><td colspan="${cat.cols.length+1}"><button class="btn-add-row" onclick="openAddRow(${ci})">➕ เพิ่มสินค้า</button></td></tr>`;
   h+=`</tbody></table>`;
   return h;
 }
 
 // ── BRAND TABLE (rowspan) ─────────────────────
 function buildBrand(cat,ci){
-  const UNITS=['ลัง','ขวด','ถุง','แผง','แพ็ค','ถาด'];
   const PVC=new Set(['v-set','v-rate','v-retail','v-crate']);
-  function uSel(ci2,ri,k,cur){
-    let s=`<select class="unit-sel" onchange="sv(${ci2},${ri},'${k}_u',this.value)"><option value="">– หน่วย –</option>`;
-    UNITS.forEach(u=>{s+=`<option value="${u}"${cur===u?' selected':''}>${u}</option>`;});
-    return s+`</select>`;
-  }
   let h=`<table><thead><tr>`;
-  cat.cols.forEach((c,colIdx)=>{
+  cat.cols.forEach(c=>{
     const isBrand=c.k==='brand';
-    // brand: ไม่กำหนด width ให้ auto-fit ตามเนื้อหา
-    // non-brand: ใช้ min-width px (ไม่ให้บีบช่องยี่ห้อ)
-    const thStyle=isBrand
-      ?'white-space:nowrap;padding-left:14px;padding-right:14px'
-      :`min-width:${Math.round(parseFloat(c.w)*7.5)}px`;
-    if(editMode){
-      h+=`<th style="${thStyle}"><input class="ei-th" value="${esc(c.lb)}" oninput="cats[${ci}].cols[${colIdx}].lb=this.value;save()">${cat.cols.length>1?`<button class="btn-del-col" onclick="delCol(${ci},${colIdx})" title="ลบคอลัม">✕</button>`:''}</th>`;
-    }else{
-      h+=`<th style="${thStyle}">${esc(c.lb)}</th>`;
-    }
+    const thStyle=isBrand?'white-space:nowrap;padding-left:14px;padding-right:14px':`min-width:${Math.round(parseFloat(c.w)*7.5)}px`;
+    h+=`<th style="${thStyle}">${esc(c.lb)}</th>`;
   });
-  if(editMode)h+=`<th style="width:46px;text-align:center"><button class="th-add-col" onclick="openColModal(${ci})" title="เพิ่มคอลัม">+</button></th>`;
   h+=`</tr></thead><tbody>`;
-  if(editMode){
-    cat.rows.forEach((row,ri)=>{
-      h+=`<tr style="background:${row._bg||'#fff'}">`;
-      cat.cols.forEach(c=>{
-        const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
-        const u=row[c.k+'_u']||'';
-        const isPrc=PVC.has(c.vc);
-        const iw=['brand','size','ptype'].includes(c.k)?'ei-sm':'ei-num';
-        h+=`<td><input class="ei ${iw}" value="${esc(String(disp))}" oninput="sv(${ci},${ri},'${c.k}',this.value)">`;
-        if(isPrc)h+=uSel(ci,ri,c.k,u);
-        h+=`</td>`;
-      });
-      h+=`<td style="white-space:nowrap"><button class="btn-move-row" onclick="openMvModal(${ci},${ri})" title="ย้ายบรรทัด">⇅</button><button class="btn-row-color" style="background:${row._bg||'#fff'}" onclick="openRcModal(${ci},${ri})" title="เปลี่ยนสีบรรทัด"></button><button class="btn-del-row" onclick="delRow(${ci},${ri})">✕</button></td>`;
-      h+=`</tr>`;
-    });
-    h+=`<tr><td colspan="${cat.cols.length+1}"><button class="btn-add-row" onclick="openAddRow(${ci})">➕ เพิ่มสินค้า</button></td></tr>`;
-  }else if(exportMode){
+  if(exportMode){
     const groups=[];let cur=null;
     cat.rows.forEach(r=>{
       if(!cur||r.brand!==cur.brand){cur={brand:r.brand,rows:[r],bg:r._bg};groups.push(cur);}
@@ -903,14 +776,7 @@ function buildBrand(cat,ci){
 // ══════════════════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════════════════
-function sv(ci,ri,k,v){
-  if(k.endsWith('_u')){cats[ci].rows[ri][k]=v;save();return;}
-  const n=parseFloat(v);
-  cats[ci].rows[ri][k]=(!isNaN(n)&&v.trim()!==''&&/^[\d.\/\-\+\(\) ]+$/.test(v.trim()))?n:v;
-  save();
-}
-function delRow(ci,ri){cats[ci].rows.splice(ri,1);save();render();}
-// palette ตามระบบสี Google Sheets — จัดเป็นคอลัมน์ (แต่ละกลุ่มสี 4 shade จากเข้มไปอ่อน)
+// palette ตามระบบสี Google Sheets
 const AR_COLORS=[
   // ── Grayscale ──
   '#000000','#434343','#666666','#999999','#b7b7b7','#cccccc','#d9d9d9','#efefef','#f3f3f3','#ffffff',
@@ -923,162 +789,6 @@ const AR_COLORS=[
 let _arCI=-1;
 let _arColor='#ffffff';
 
-function openAddRow(ci){
-  _arCI=ci;_arColor='#ffffff';
-  const sel=document.getElementById('arPos');
-  sel.innerHTML='';
-  const rows=cats[ci].rows;
-  for(let i=0;i<=rows.length;i++){
-    const opt=document.createElement('option');
-    opt.value=i;
-    if(i===0) opt.text=`บรรทัดที่ 1 (ต้นตาราง)`;
-    else if(i===rows.length) opt.text=`บรรทัดที่ ${i+1} (ท้ายสุด)`;
-    else opt.text=`บรรทัดที่ ${i+1}`;
-    sel.appendChild(opt);
-  }
-  sel.value=rows.length;
-  const wrap=document.getElementById('arColors');
-  wrap.innerHTML='';
-  AR_COLORS.forEach(c=>{
-    const d=document.createElement('div');
-    d.className='ar-swatch'+(c===_arColor?' selected':'');
-    d.style.background=c;
-    d.title=c;
-    d.onclick=()=>{_arColor=c;wrap.querySelectorAll('.ar-swatch').forEach(s=>s.classList.remove('selected'));d.classList.add('selected');};
-    wrap.appendChild(d);
-  });
-  document.getElementById('arModal').classList.add('on');
-}
-function closeAddRow(){document.getElementById('arModal').classList.remove('on');}
-function doAddRow(){
-  const pos=parseInt(document.getElementById('arPos').value);
-  const nr={};cats[_arCI].cols.forEach(c=>{nr[c.k]='';});
-  nr._bg=_arColor;
-  cats[_arCI].rows.splice(pos,0,nr);
-  save();render();closeAddRow();
-}
-// ── MOVE ROW MODAL ──────────────────────────────
-let _mvCI=-1,_mvRI=-1;
-function openMvModal(ci,ri){
-  _mvCI=ci;_mvRI=ri;
-  const rows=cats[ci].rows;
-  const sel=document.getElementById('mvPos');
-  sel.innerHTML='';
-  for(let i=0;i<=rows.length;i++){
-    if(i===ri)continue;
-    const opt=document.createElement('option');
-    opt.value=i;
-    if(i===0) opt.text='บรรทัดที่ 1 (ต้นตาราง)';
-    else if(i===rows.length) opt.text=`ท้ายสุด (บรรทัดที่ ${i+1})`;
-    else{
-      const r=rows[i];
-      const lbl=r._s?('── '+r._lb+' ──'):(String(Object.values(r).find(v=>v&&typeof v==='string'&&!v.startsWith('#'))||'').slice(0,20)||`บรรทัดที่ ${i+1}`);
-      opt.text=`บรรทัดที่ ${i+1}: ${lbl}`;
-    }
-    sel.appendChild(opt);
-  }
-  const cur=rows[ri];
-  const sub=cur._s?cur._lb:(String(Object.values(cur).find(v=>v&&typeof v==='string'&&!v.startsWith('#'))||'').slice(0,30));
-  document.getElementById('mvSub').textContent=sub?`"${sub}"`:'';
-  document.getElementById('mvModal').classList.add('on');
-}
-function closeMvModal(){document.getElementById('mvModal').classList.remove('on');}
-function doMoveRow(){
-  const to=parseInt(document.getElementById('mvPos').value);
-  const row=cats[_mvCI].rows.splice(_mvRI,1)[0];
-  const ins=to>_mvRI?to-1:to;
-  cats[_mvCI].rows.splice(ins,0,row);
-  save();render();closeMvModal();
-}
-
-// ── ROW COLOR PICKER ────────────────────────────
-let _rcCI=-1,_rcRI=-1,_rcColor='#ffffff';
-function openRcModal(ci,ri){
-  _rcCI=ci;_rcRI=ri;
-  _rcColor=cats[ci].rows[ri]._bg||'#ffffff';
-  const wrap=document.getElementById('rcColors');
-  wrap.innerHTML='';
-  AR_COLORS.forEach(c=>{
-    const d=document.createElement('div');
-    d.className='rc-sw'+(c===_rcColor?' selected':'');
-    d.style.background=c;
-    d.title=c;
-    d.onclick=()=>{
-      _rcColor=c;
-      wrap.querySelectorAll('.rc-sw').forEach(s=>s.classList.remove('selected'));
-      d.classList.add('selected');
-      document.getElementById('rcHexInp').value=c;
-      document.getElementById('rcColorPick').value=c;
-      document.getElementById('rcPreview').style.background=c;
-    };
-    wrap.appendChild(d);
-  });
-  document.getElementById('rcHexInp').value=_rcColor;
-  document.getElementById('rcColorPick').value=_rcColor;
-  document.getElementById('rcPreview').style.background=_rcColor;
-  document.getElementById('rcModal').classList.add('on');
-}
-function closeRcModal(){document.getElementById('rcModal').classList.remove('on');}
-function doRcColor(){
-  cats[_rcCI].rows[_rcRI]._bg=_rcColor;
-  save();render();closeRcModal();
-}
-function rcPickColor(hex){
-  _rcColor=hex;
-  document.getElementById('rcHexInp').value=hex;
-  document.getElementById('rcColorPick').value=hex;
-  document.getElementById('rcPreview').style.background=hex;
-  document.getElementById('rcColors').querySelectorAll('.rc-sw').forEach(s=>{
-    s.classList.toggle('selected',s.title===hex);
-  });
-}
-function rcHexInput(val){
-  val=val.trim();
-  if(/^#[0-9a-fA-F]{6}$/.test(val)){
-    rcPickColor(val);
-  } else if(/^[0-9a-fA-F]{6}$/.test(val)){
-    rcPickColor('#'+val);
-  }
-}
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('rcModal').addEventListener('click',function(e){if(e.target===this)closeRcModal();});
-  document.getElementById('mvModal').addEventListener('click',function(e){if(e.target===this)closeMvModal();});
-});
-
-function delCat(ci){
-  if(!confirm(`ลบหมวด "${cats[ci].title}"?`))return;
-  cats.splice(ci,1);
-  if(activeTab>=cats.length)activeTab=Math.max(0,cats.length-1);
-  save();render();
-}
-
-function toggleEdit(){
-  editMode=!editMode;
-  const btn=document.getElementById('editBtn'),ban=document.getElementById('editBanner'),cnl=document.getElementById('cancelBtn');
-  if(editMode){
-    editSnapshot=JSON.parse(JSON.stringify(cats));
-    btn.textContent='✅ เสร็จแก้ไข';btn.className='tbtn tbtn-done';
-    cnl.style.display='inline-block';ban.style.display='block';
-  }else{
-    editSnapshot=null;
-    btn.textContent='✏️ แก้ไขราคา';btn.className='tbtn tbtn-edit';
-    cnl.style.display='none';ban.style.display='none';
-  }
-  render();
-}
-
-function cancelEdit(){
-  if(!editSnapshot)return;
-  if(!confirm('ยกเลิกการแก้ไขทั้งหมด? ราคาจะกลับเป็นค่าเดิมก่อนแก้ไข'))return;
-  cats=editSnapshot;
-  editSnapshot=null;
-  save();
-  editMode=false;
-  const btn=document.getElementById('editBtn'),ban=document.getElementById('editBanner'),cnl=document.getElementById('cancelBtn');
-  btn.textContent='✏️ แก้ไขราคา';btn.className='tbtn tbtn-edit';
-  cnl.style.display='none';ban.style.display='none';
-  render();
-}
 
 
 // ══════════════════════════════════════════════
@@ -1159,18 +869,14 @@ async function doExportSelected(){
   closeExp();
 
   const origTab=activeTab;
-  const wasEdit=editMode;
-  if(wasEdit){editMode=false;}
 
-  // ซ่อน toolbar และ banner
+  // ซ่อน toolbar
   const tb=document.getElementById('toolbar');
-  const bn=document.getElementById('editBanner');
   const tabBar=document.getElementById('tab-bar');
   const ov=document.getElementById('overlay');
   const ovMsg=document.getElementById('ovMsg');
   const ovSub=document.getElementById('ovSub');
   tb.style.display='none';
-  bn.style.display='none';
 
   // ย้าย tab-bar ออกนอก wrapper ชั่วคราว แล้วแก้ wrapper เป็น single-column
   const wrapEl=document.getElementById('wrapper');
@@ -1227,10 +933,8 @@ async function doExportSelected(){
   else{tabBarParent.appendChild(tabBar);}
   tabBar.style.display='';
   tb.style.display='';
-  bn.style.display='';
   ov.style.display='none';
   activeTab=origTab;
-  if(wasEdit){editMode=true;}
   render();
 
   // สร้างชื่อไฟล์
