@@ -1,0 +1,1483 @@
+<html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ตารางราคาสินค้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Sarabun',sans-serif;background:#dde4ed;min-height:100vh;padding:12px 8px max(40px,env(safe-area-inset-bottom));padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));font-size:17px}
+
+#toolbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;position:sticky;top:6px;z-index:99;padding-top:env(safe-area-inset-top,0px)}
+.tbtn{padding:9px 18px;border:none;border-radius:10px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.22);transition:all .15s}
+.tbtn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.tbtn:active{transform:translateY(0)}
+.tbtn-line{background:linear-gradient(135deg,#06c755,#00a63e);color:#fff}
+.tbtn-edit{background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff}
+.tbtn-done{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff}
+.tbtn-cancel{background:linear-gradient(135deg,#e65100,#bf360c);color:#fff;display:none}
+.tbtn-a4{background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff}
+
+#editBanner{display:none;max-width:880px;margin:0 auto 8px;background:#fff8e1;border:1.5px solid #ffc107;border-radius:10px;padding:7px 16px;text-align:center;font-size:14px;color:#e65100;font-weight:600}
+
+#wrapper{max-width:880px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.16);display:grid;grid-template-columns:110px 1fr;grid-template-rows:auto 1fr;background:linear-gradient(to right,#1e1e2e 110px,#fff 110px)}
+#datebar{grid-column:1 / -1}
+
+#datebar{background:linear-gradient(135deg,#1a237e,#283593,#303f9f);padding:14px 20px;display:flex;align-items:flex-start;justify-content:space-between;color:#fff;gap:10px;border-radius:16px 16px 0 0}
+#datebar h1{font-size:30px;font-weight:800;letter-spacing:1px}
+#datebar .dtsub{font-size:16px;opacity:.8;margin-bottom:3px}
+.edit-date-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px;display:none;margin-top:6px}
+
+/* Shop Info */
+#shopArea{text-align:right;flex-shrink:0}
+.shop-view-l1{font-size:19px;font-weight:800;line-height:1.3}
+.shop-view-l2,.shop-view-l3{font-size:14px;opacity:.85;line-height:1.5}
+.shop-inp{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.42);border-radius:7px;padding:3px 9px;color:#fff;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;width:155px;outline:none;display:block;margin-bottom:4px;text-align:right}
+.shop-inp.sl1{font-size:15px;font-weight:800}
+.shop-inp::placeholder{color:rgba(255,255,255,.42)}
+
+/* ── SIDEBAR NAV ── */
+#tab-bar{display:flex;flex-direction:column;background:#1e1e2e;border-right:1px solid rgba(255,255,255,.1);overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:calc(16 * 72px);align-self:start;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+#tab-bar::-webkit-scrollbar{width:3px}
+#tab-bar::-webkit-scrollbar-track{background:transparent}
+#tab-bar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+#tab-bar::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.4)}
+.tab-btn{width:100%;padding:11px 6px 9px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);background:transparent;border-right:3px solid transparent;transition:all .18s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-bottom:1px solid rgba(255,255,255,.06);touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,0);user-select:none;text-align:center}
+.tab-btn:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.07)}
+.tab-btn.active{color:#fff;border-right-color:currentColor;background:rgba(255,255,255,.08)}
+.tab-btn .tbi{font-size:22px;line-height:1.1;display:block}
+.tab-btn .tbt{font-size:11px;word-break:break-word;overflow-wrap:break-word;white-space:normal;line-height:1.3;text-align:center;display:block;max-width:98px}
+.tab-btn .tbn{font-size:10px;opacity:.45;font-weight:600;display:block}
+.tab-btn:last-child{border-bottom:none}
+.tab-btn.active[data-grad="gh-rice1"]{color:#64b5f6;border-right-color:#64b5f6}
+.tab-btn.active[data-grad="gh-rice2"]{color:#81c784;border-right-color:#81c784}
+.tab-btn.active[data-grad="gh-egg"]  {color:#ffb74d;border-right-color:#ffb74d}
+.tab-btn.active[data-grad="gh-water"]{color:#4fc3f7;border-right-color:#4fc3f7}
+.tab-btn.active[data-grad="gh-beer"] {color:#ef9a9a;border-right-color:#ef9a9a}
+.tab-btn.active[data-grad="gh-liqc"] {color:#80cbc4;border-right-color:#80cbc4}
+.tab-btn.active[data-grad="gh-liqw"] {color:#ce93d8;border-right-color:#ce93d8}
+.tab-btn.active[data-grad="gh-liqr"] {color:#ffcc80;border-right-color:#ffcc80}
+.tab-btn.active[data-grad="gh-pink"] {color:#f48fb1;border-right-color:#f48fb1}
+.tab-btn.active[data-grad="gh-cyan"] {color:#80deea;border-right-color:#80deea}
+.tab-btn.active[data-grad="gh-lime"] {color:#aed581;border-right-color:#aed581}
+.tab-btn.active[data-grad="gh-indigo"]{color:#9fa8da;border-right-color:#9fa8da}
+.tab-btn.active[data-grad="gh-red"]    {color:#ef9a9a;border-right-color:#ef9a9a}
+.tab-btn.active[data-grad="gh-amber"]  {color:#ffab91;border-right-color:#ffab91}
+.tab-btn.active[data-grad="gh-yellow"] {color:#fff176;border-right-color:#fff176}
+.tab-btn.active[data-grad="gh-navy"]   {color:#7986cb;border-right-color:#7986cb}
+.tab-btn.active[data-grad="gh-violet"] {color:#b39ddb;border-right-color:#b39ddb}
+.tab-btn.active[data-grad="gh-gray-d"] {color:#b0bec5;border-right-color:#b0bec5}
+.tab-btn.active[data-grad="gh-gray"]   {color:#cfd8dc;border-right-color:#cfd8dc}
+.tab-btn.active[data-grad="gh-red-l"]  {color:#ffcdd2;border-right-color:#ffcdd2}
+.tab-btn.active[data-grad="gh-yellow-l"]{color:#fff9c4;border-right-color:#fff9c4}
+.tab-btn.active[data-grad="gh-green-l"]{color:#c8e6c9;border-right-color:#c8e6c9}
+.tab-btn.active[data-grad="gh-mint"]   {color:#b2dfdb;border-right-color:#b2dfdb}
+.tab-btn.active[data-grad="gh-sky"]    {color:#b3e5fc;border-right-color:#b3e5fc}
+.tab-btn.active[data-grad="gh-blue-l"] {color:#bbdefb;border-right-color:#bbdefb}
+.tab-btn.active[data-grad="gh-purple-l"]{color:#e1bee7;border-right-color:#e1bee7}
+.tab-btn.active[data-grad="gh-rose"]   {color:#fce4ec;border-right-color:#fce4ec}
+.tab-btn.active[data-grad="gh-gray-l"] {color:#eceff1;border-right-color:#eceff1}
+
+#tab-content{background:#fff;overflow:hidden;flex:1;min-width:0}
+
+/* ── CARD HEADER ── */
+.ch{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;color:#fff;flex-wrap:wrap;gap:8px}
+.ch-left{display:flex;align-items:center;gap:10px}
+.ch-icon{font-size:32px}
+.ch-title{font-size:28px;font-weight:800}
+.ch-note{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:14px;padding:5px 14px;font-size:14px;font-weight:600}
+.ch-note-row{display:flex;align-items:center;gap:5px}
+.ch-note-inp{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);border-radius:12px;padding:3px 11px;color:#fff;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;width:190px;outline:none}
+.ch-note-inp::placeholder{color:rgba(255,255,255,.5)}
+.ch-note-del{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ch-btns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn-del-cat{background:rgba(180,0,0,.4);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px}
+.ei-catname{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.5);border-radius:5px;padding:3px 10px;color:#fff;font-family:'Sarabun',sans-serif;font-size:20px;font-weight:800;width:170px;outline:none}
+/* Emoji edit input */
+.ei-icon{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:2px 4px;color:#fff;font-family:'Sarabun',sans-serif;font-size:22px;font-weight:800;width:48px;outline:none;text-align:center;cursor:text}
+
+/* header gradients */
+.gh-rice1{background:linear-gradient(135deg,#0d47a1,#1565c0,#1976d2)}
+.gh-rice2{background:linear-gradient(135deg,#1b5e20,#2e7d32,#388e3c)}
+.gh-egg  {background:linear-gradient(135deg,#e65100,#f57f17,#fb8c00)}
+.gh-water{background:linear-gradient(135deg,#01579b,#0277bd,#0288d1)}
+.gh-beer {background:linear-gradient(135deg,#7f0000,#b71c1c,#c62828)}
+.gh-liqc {background:linear-gradient(135deg,#004d40,#00695c,#00796b)}
+.gh-liqw {background:linear-gradient(135deg,#4a148c,#6a1b9a,#7b1fa2)}
+.gh-liqr {background:linear-gradient(135deg,#4e342e,#6d4c41,#8d6e63)}
+.gh-pink {background:linear-gradient(135deg,#880e4f,#c2185b,#e91e63)}
+.gh-cyan {background:linear-gradient(135deg,#006064,#00838f,#0097a7)}
+.gh-lime {background:linear-gradient(135deg,#558b2f,#6a9f35,#7cb342)}
+.gh-indigo{background:linear-gradient(135deg,#283593,#3949ab,#5c6bc0)}
+
+/* ── โทนเข้ม (Dark) เพิ่มเติม ── */
+.gh-red    {background:linear-gradient(135deg,#b71c1c,#c62828,#e53935)}
+.gh-amber  {background:linear-gradient(135deg,#bf360c,#d84315,#e64a19)}
+.gh-yellow {background:linear-gradient(135deg,#bf9000,#f57f17,#fbc02d)}
+.gh-navy   {background:linear-gradient(135deg,#0a0e4f,#1a237e,#283593)}
+.gh-violet {background:linear-gradient(135deg,#4527a0,#512da8,#5e35b1)}
+.gh-gray-d {background:linear-gradient(135deg,#212121,#37474f,#455a64)}
+.gh-gray   {background:linear-gradient(135deg,#37474f,#455a64,#546e7a)}
+
+/* ── โทนอ่อน (Light) เพิ่มเติม ── */
+.gh-red-l  {background:linear-gradient(135deg,#c62828,#e53935,#f44336)}
+.gh-yellow-l{background:linear-gradient(135deg,#fbc02d,#fdd835,#ffee58)}
+.gh-green-l {background:linear-gradient(135deg,#43a047,#4caf50,#66bb6a)}
+.gh-mint   {background:linear-gradient(135deg,#00897b,#26a69a,#4db6ac)}
+.gh-sky    {background:linear-gradient(135deg,#039be5,#29b6f6,#4fc3f7)}
+.gh-blue-l {background:linear-gradient(135deg,#1e88e5,#2196f3,#42a5f5)}
+.gh-purple-l{background:linear-gradient(135deg,#8e24aa,#9c27b0,#ab47bc)}
+.gh-rose   {background:linear-gradient(135deg,#e91e63,#ec407a,#f06292)}
+.gh-gray-l {background:linear-gradient(135deg,#607d8b,#78909c,#90a4ae)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
+table{width:auto;min-width:100%;border-collapse:collapse;font-size:18px}
+thead tr{background:#f0f2f5}
+th{padding:12px 10px;font-weight:800;font-size:16px;color:#1a237e;border-bottom:2.5px solid #dee2e8;text-align:center;white-space:nowrap}
+th.al{text-align:center;padding-left:10px}
+td{padding:13px 10px;border-bottom:1px solid #f0f0f0;text-align:center;vertical-align:middle}
+td.al{text-align:center;padding-left:10px;padding-right:10px;font-weight:700;font-size:18px;color:#1a1a2e}
+tbody tr:last-child td{border-bottom:none}
+td.brand-cell{font-weight:900;font-size:18px;border-right:2.5px solid #dee2e8;vertical-align:middle;text-align:center;color:#1a237e;white-space:nowrap}
+tr.sep-row td{font-weight:800;font-size:15px;color:#444;padding:7px 16px;border-top:1px solid #e0e0e0}
+.v-set   {font-weight:900;color:#1565c0;font-size:24px}
+.v-retail{font-weight:900;color:#c62828;font-size:24px}
+.v-rate  {font-weight:900;color:#e65100;font-size:24px}
+.v-crate {font-weight:900;color:#2e7d32;font-size:24px}
+.v-cond  {font-size:16px;color:#666;font-weight:700}
+.v-dash  {color:#ccc;font-size:18px}
+
+/* ── EDIT INPUTS ── */
+.ei{border:1.5px solid #1565c0;border-radius:5px;padding:3px 6px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;background:#e8f0fe;outline:none;width:100%;min-width:44px}
+.ei:focus{background:#c5d8ff}
+.ei-name{min-width:130px}
+.ei-num{max-width:88px;text-align:center}
+.ei-sm{max-width:72px;text-align:center}
+.btn-del-row{background:none;border:none;color:#c62828;font-size:16px;cursor:pointer;padding:0 4px;font-weight:700}
+.btn-add-row{width:100%;padding:8px;background:#f9fbe7;color:#558b2f;font-weight:700;border:none;border-top:1px dashed #c5e1a5;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:13px}
+.btn-add-row:hover{background:#f0f4c3}
+.ei-th{border:1.5px solid #1565c0;border-radius:4px;padding:2px 5px;font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;background:#e8f0fe;outline:none;width:100%;text-align:center;color:#1a237e}
+.unit-sel{border:1px solid #bbb;border-radius:4px;font-family:'Sarabun',sans-serif;font-size:11px;background:#f5f5f5;color:#444;padding:1px 3px;cursor:pointer;margin-top:3px;display:block;width:100%;text-align:center}
+.unit-sel:focus{outline:none;border-color:#1565c0;background:#e8f0fe}
+.unit-sep{font-size:14px;color:#aaa;margin:0 3px;font-weight:400}
+.unit-tag{font-size:14px;color:#555;font-weight:700;background:#e8eaf6;border-radius:5px;padding:1px 8px;display:inline-block;vertical-align:middle;line-height:1.7;letter-spacing:.3px}
+
+/* ── BACKUP MODAL ── */
+#bkModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+#bkModal.on{display:flex}
+#bkBox{background:#fff;border-radius:16px;padding:24px;width:min(520px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35);font-family:'Sarabun',sans-serif}
+#bkBox h3{font-size:18px;font-weight:800;color:#1a237e;margin-bottom:4px}
+#bkBox p{font-size:13px;color:#666;margin-bottom:12px}
+#bkTa{width:100%;height:120px;border:1.5px solid #bbb;border-radius:8px;padding:8px;font-family:'Sarabun',sans-serif;font-size:12px;resize:vertical;outline:none}
+#bkTa:focus{border-color:#1565c0}
+.bk-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bk-btn{padding:9px 18px;border:none;border-radius:9px;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700}
+.bk-copy{background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff}
+.bk-load{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff}
+.bk-close{background:#eee;color:#333;margin-left:auto}
+
+/* ── EXPORT MODAL ── */
+#expModal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(20px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))}
+#expModal.on{display:block}
+#expBox{background:#fff;border-radius:16px;padding:20px 20px;width:min(400px,92vw);margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.35);font-family:'Sarabun',sans-serif}
+#expBox h3{font-size:18px;font-weight:800;color:#1a237e;margin-bottom:12px}
+.exp-all-row{border-bottom:1.5px solid #e8eaf6;padding-bottom:9px;margin-bottom:8px}
+.exp-all-row label{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;min-height:44px}
+#expList{display:flex;flex-direction:column;gap:2px;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
+.exp-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:15px;font-weight:600;transition:background .12s;color:#333}
+.exp-item:hover{background:#f0f4ff}
+.exp-cb{width:20px;height:20px;cursor:pointer;accent-color:#1565c0;flex-shrink:0}
+.exp-all-row .exp-cb{accent-color:#1565c0}
+
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.58);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#fff;font-size:18px;font-weight:700}
+#overlay.on{display:flex}
+
+/* ── ADD ROW MODAL ── */
+#arModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+#arModal.on{display:flex}
+#arBox{background:#fff;border-radius:16px;padding:22px 20px;width:min(380px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35);font-family:'Sarabun',sans-serif}
+#arBox h3{font-size:18px;font-weight:800;color:#1a237e;margin-bottom:14px}
+.ar-row{margin-bottom:14px}
+.ar-label{font-size:13px;font-weight:700;color:#555;margin-bottom:6px}
+#arPos{width:100%;padding:8px 10px;border:1.5px solid #bbb;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:#222;background:#fafafa;outline:none;cursor:pointer}
+#arPos:focus{border-color:#1565c0;background:#e8f0fe}
+#arColors{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.ar-swatch{width:36px;height:36px;border-radius:8px;border:2.5px solid transparent;cursor:pointer;transition:transform .12s,border-color .12s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.ar-swatch:hover{transform:scale(1.12)}
+.ar-swatch.selected{border-color:#1565c0;transform:scale(1.15);box-shadow:0 2px 8px rgba(21,101,192,.4)}
+.ar-btns{display:flex;gap:8px;margin-top:16px}
+.ar-btn-add{flex:1;padding:10px;background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+.ar-btn-cancel{padding:10px 18px;background:#eee;color:#444;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+
+
+/* ── COLUMN MANAGER ── */
+#colModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+#colModal.on{display:flex}
+#colBox{background:#fff;border-radius:16px;padding:22px 20px;width:min(380px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.35);font-family:'Sarabun',sans-serif}
+#colBox h3{font-size:18px;font-weight:800;color:#1a237e;margin-bottom:14px}
+.col-field{margin-bottom:13px}
+.col-lbl{font-size:13px;font-weight:700;color:#555;margin-bottom:5px}
+.col-inp{width:100%;padding:8px 10px;border:1.5px solid #bbb;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:#222;background:#fafafa;outline:none}
+.col-inp:focus{border-color:#1565c0;background:#e8f0fe}
+.col-sel{width:100%;padding:8px 10px;border:1.5px solid #bbb;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;color:#222;background:#fafafa;outline:none;cursor:pointer}
+.col-btns{display:flex;gap:8px;margin-top:16px}
+.col-btn-ok{flex:1;padding:10px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+.col-btn-cl{padding:10px 18px;background:#eee;color:#444;border:none;border-radius:10px;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+.btn-del-col{background:none;border:none;color:#c62828;font-size:11px;cursor:pointer;padding:0 2px;font-weight:800;vertical-align:middle;opacity:.65;line-height:1}
+.btn-del-col:hover{opacity:1}
+.th-add-col{background:rgba(21,101,192,.12);border:1.5px dashed #1565c0;border-radius:6px;color:#1565c0;cursor:pointer;font-size:15px;font-weight:800;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;padding:0;font-family:'Sarabun',sans-serif;line-height:1}
+.th-add-col:hover{background:rgba(21,101,192,.22)}
+
+/* ── ROW COLOR PICKER ── */
+#rcModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1001;align-items:center;justify-content:center}
+#rcModal.on{display:flex}
+#rcBox{background:#fff;border-radius:14px;padding:18px 18px 14px;width:min(380px,94vw);box-shadow:0 6px 30px rgba(0,0,0,.3);font-family:'Sarabun',sans-serif}
+#rcBox h3{font-size:15px;font-weight:800;color:#1a237e;margin-bottom:11px}
+#rcColors{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:10px}
+.rc-sw{width:28px;height:28px;border-radius:5px;border:2px solid transparent;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .1s,border-color .1s}
+.rc-sw:hover{transform:scale(1.15);z-index:1;position:relative}
+.rc-sw.selected{border-color:#1565c0;transform:scale(1.15);box-shadow:0 2px 8px rgba(21,101,192,.5);z-index:1;position:relative}
+.rc-btns{display:flex;gap:8px}
+.rc-btn-ok{flex:1;padding:9px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.rc-btn-cl{padding:9px 14px;background:#eee;color:#444;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.btn-row-color{border:1.5px solid rgba(0,0,0,.2);border-radius:4px;width:17px;height:17px;cursor:pointer;padding:0;display:inline-block;vertical-align:middle;margin-right:3px;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
+
+/* ── MOVE ROW MODAL ── */
+#mvModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1001;align-items:center;justify-content:center}
+#mvModal.on{display:flex}
+#mvBox{background:#fff;border-radius:14px;padding:18px 18px 14px;width:min(320px,88vw);box-shadow:0 6px 30px rgba(0,0,0,.3);font-family:'Sarabun',sans-serif}
+#mvBox h3{font-size:15px;font-weight:800;color:#1a237e;margin-bottom:4px}
+.mv-sub{font-size:12px;color:#777;margin-bottom:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mvPos{width:100%;padding:8px 10px;border:1.5px solid #bbb;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:#222;background:#fafafa;outline:none;cursor:pointer;margin-bottom:12px}
+#mvPos:focus{border-color:#1565c0;background:#e8f0fe}
+.mv-btns{display:flex;gap:8px}
+.mv-btn-ok{flex:1;padding:9px;background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.mv-btn-cl{padding:9px 14px;background:#eee;color:#444;border:none;border-radius:9px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.btn-move-row{border:1px solid rgba(21,101,192,.35);background:rgba(21,101,192,.08);color:#1565c0;border-radius:4px;width:17px;height:17px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-right:2px;font-size:10px;font-weight:900;line-height:1}
+.btn-move-row:hover{background:rgba(21,101,192,.22)}
+</style>
+</head>
+<body>
+<div id="overlay"><div id="ovMsg">📸 กำลังสร้างภาพ...</div><div id="ovSub" style="font-size:13px;opacity:.7;margin-top:4px">โปรดรอสักครู่</div></div>
+
+<!-- Export Modal -->
+<div id="expModal">
+  <div id="expBox">
+    <h3>📸 เลือกหมวดที่จะส่ง LINE</h3>
+    <div class="exp-all-row">
+      <label><input type="checkbox" class="exp-cb" id="expAllCb" onchange="toggleExpAll(this)"> ✅ เลือกทั้งหมด</label>
+    </div>
+    <div id="expList"></div>
+    <div class="bk-btns">
+      <button class="bk-btn bk-copy" onclick="doExportSelected()">📸 ส่ง LINE</button>
+      <button class="bk-btn bk-close" onclick="closeExp()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Row Modal -->
+<div id="arModal">
+  <div id="arBox">
+    <h3>➕ เพิ่มสินค้า</h3>
+    <div class="ar-row">
+      <div class="ar-label">📍 เพิ่มที่บรรทัด</div>
+      <select id="arPos"></select>
+    </div>
+    <div class="ar-row">
+      <div class="ar-label">🎨 สีพื้นหลังบรรทัด</div>
+      <div id="arColors"></div>
+    </div>
+    <div class="ar-btns">
+      <button class="ar-btn-add" onclick="doAddRow()">➕ เพิ่มสินค้า</button>
+      <button class="ar-btn-cancel" onclick="closeAddRow()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Column Modal -->
+<div id="colModal">
+  <div id="colBox">
+    <h3>➕ เพิ่มคอลัม</h3>
+    <div class="col-field">
+      <div class="col-lbl">🏷️ ชื่อหัวคอลัม</div>
+      <input class="col-inp" id="colLabel" placeholder="เช่น ราคาพิเศษ">
+    </div>
+    <div class="col-field">
+      <div class="col-lbl">🔑 Key (ภาษาอังกฤษ)</div>
+      <input class="col-inp" id="colKey" placeholder="เช่น special (ไม่ต้องใส่ก็ได้)">
+    </div>
+    <div class="col-field">
+      <div class="col-lbl">📏 ความกว้าง</div>
+      <input class="col-inp" id="colWidth" placeholder="เช่น 12%" value="12%">
+    </div>
+    <div class="col-field">
+      <div class="col-lbl">🎨 สีตัวเลข/ข้อความ</div>
+      <select class="col-sel" id="colVc">
+        <option value="">ปกติ (ดำ)</option>
+        <option value="v-set">น้ำเงิน (ราคาตั้ง)</option>
+        <option value="v-retail">แดง (ปลีก)</option>
+        <option value="v-rate">ส้ม (เรท)</option>
+        <option value="v-crate">เขียว (ลัง)</option>
+        <option value="v-cond">เทา (เงื่อนไข)</option>
+      </select>
+    </div>
+    <div class="col-btns">
+      <button class="col-btn-ok" onclick="doAddCol()">➕ เพิ่มคอลัม</button>
+      <button class="col-btn-cl" onclick="closeColModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Move Row Modal -->
+<div id="mvModal">
+  <div id="mvBox">
+    <h3>↕️ ย้ายบรรทัด</h3>
+    <div class="mv-sub" id="mvSub"></div>
+    <select id="mvPos"></select>
+    <div class="mv-btns">
+      <button class="mv-btn-ok" onclick="doMoveRow()">✅ ย้ายไปที่นี่</button>
+      <button class="mv-btn-cl" onclick="closeMvModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Row Color Modal -->
+<div id="rcModal">
+  <div id="rcBox">
+    <h3>🎨 เปลี่ยนสีบรรทัด</h3>
+    <div id="rcColors"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:8px 0 10px">
+      <input type="color" id="rcColorPick" style="width:38px;height:38px;border:1.5px solid #ddd;border-radius:8px;cursor:pointer;padding:2px;background:#fff;flex-shrink:0" oninput="rcPickColor(this.value)">
+      <input type="text" id="rcHexInp" maxlength="7" placeholder="#rrggbb" style="flex:1;border:1.5px solid #bbb;border-radius:8px;padding:7px 10px;font-family:'Sarabun',sans-serif;font-size:14px;outline:none;font-weight:600" oninput="rcHexInput(this.value)" onfocus="this.style.borderColor='#1565c0'" onblur="this.style.borderColor='#bbb'">
+      <div id="rcPreview" style="width:38px;height:38px;border-radius:8px;border:1.5px solid #ddd;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,.1)"></div>
+    </div>
+    <div class="rc-btns">
+      <button class="rc-btn-ok" onclick="doRcColor()">✅ ใช้สีนี้</button>
+      <button class="rc-btn-cl" onclick="closeRcModal()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS Image Share Modal -->
+<div id="iosModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:2000;flex-direction:column;align-items:center;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(20px,env(safe-area-inset-top)) 12px max(40px,env(safe-area-inset-bottom))">
+  <div style="width:100%;max-width:480px">
+    <div style="color:#fff;font-size:15px;font-weight:700;text-align:center;margin-bottom:12px;line-height:1.6">
+      📲 กดค้างที่รูปเพื่อ <strong style="color:#7cf">"บันทึกรูปภาพ"</strong><br>
+      <span style="font-size:12px;font-weight:400;opacity:.7">จากนั้นเปิด LINE แล้วส่งรูปจากคลังภาพได้เลย</span>
+    </div>
+    <div id="iosImgs" style="display:flex;flex-direction:column;gap:16px"></div>
+    <button onclick="document.getElementById('iosModal').style.display='none'"
+      style="margin-top:20px;width:100%;padding:15px;background:#fff;border:none;border-radius:14px;font-family:'Sarabun',sans-serif;font-size:16px;font-weight:700;cursor:pointer;color:#333;-webkit-tap-highlight-color:transparent">
+      ✕ ปิด
+    </button>
+  </div>
+</div>
+
+<!-- Backup Modal -->
+<div id="bkModal" class="">
+  <div id="bkBox">
+    <h3>💾 บันทึก / โหลดข้อมูล</h3>
+    <p>คัดลอก code ด้านล่างเก็บไว้ใน Note หรือ LINE ตัวเอง เพื่อใช้กู้คืนข้อมูลในอุปกรณ์อื่น</p>
+    <textarea id="bkTa" placeholder="วางข้อมูลที่บันทึกไว้ที่นี่..."></textarea>
+    <div class="bk-btns">
+      <button class="bk-btn bk-copy" onclick="bkCopy()">📋 คัดลอกข้อมูล</button>
+      <button class="bk-btn bk-load" onclick="bkLoad()">📥 โหลดข้อมูล</button>
+      <button class="bk-btn bk-close" onclick="closeBk()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<div id="toolbar">
+  <button class="tbtn tbtn-line" onclick="openExp()">📸 ส่ง LINE</button>
+  <button class="tbtn tbtn-a4"  onclick="openA4()">🖨️ ใบราคา A4</button>
+  <button class="tbtn tbtn-edit" id="editBtn" onclick="toggleEdit()">✏️ แก้ไขราคา</button>
+  <button class="tbtn" style="background:linear-gradient(135deg,#37474f,#263238);color:#fff" onclick="openBk()">💾 บันทึก/โหลด</button>
+  <button class="tbtn" style="background:linear-gradient(135deg,#0f9d58,#137333);color:#fff" id="gsBtn" onclick="loadFromSheets()">🔄 โหลดจาก Sheets</button>
+  <button class="tbtn tbtn-cancel" id="cancelBtn" onclick="cancelEdit()">❌ ยกเลิกแก้ไข</button>
+</div>
+<div id="editBanner">✏️ โหมดแก้ไข — คลิกที่ราคา / ชื่อสินค้าเพื่อแก้ไข | กด "เสร็จแก้ไข" เมื่อเสร็จ</div>
+<div id="wrapper">
+  <div id="datebar">
+    <div>
+      <div class="dtsub">ราคาสินค้าประจำวัน</div>
+      <h1 id="dateText">25 เม.ย. 2569</h1>
+      <button class="edit-date-btn" id="editDateBtn" onclick="editDate()" style="display: none;">📅 แก้ไขวันที่</button>
+    </div>
+    <div id="shopArea"><div style="text-align:right"><div class="shop-view-l1">ร้าน นครชัยนาท</div><div class="shop-view-l2">083-264-6255 ซัน</div><div class="shop-view-l3">086-446-9340 Office</div></div></div>
+  </div>
+  <div id="tab-bar"><button class="tab-btn active" data-grad="gh-rice1"><span style="font-size:11px;opacity:.6;font-weight:600">1</span><span>🌾</span><span>ข้าวสาร</span></button><button class="tab-btn" data-grad="gh-rice2"><span style="font-size:11px;opacity:.6;font-weight:600">2</span><span>🌾</span><span>ข้าวอื่นๆ</span></button><button class="tab-btn" data-grad="gh-egg"><span style="font-size:11px;opacity:.6;font-weight:600">3</span><span>🥚</span><span>ไข่ไก่</span></button><button class="tab-btn" data-grad="gh-water"><span style="font-size:11px;opacity:.6;font-weight:600">4</span><span>💧</span><span>น้ำดื่ม</span></button><button class="tab-btn" data-grad="gh-beer"><span style="font-size:11px;opacity:.6;font-weight:600">5</span><span>🍺</span><span>เบียร์ โซดา</span></button><button class="tab-btn" data-grad="gh-liqc"><span style="font-size:11px;opacity:.6;font-weight:600">6</span><span>🥃</span><span>สุราสี</span></button><button class="tab-btn" data-grad="gh-liqw"><span style="font-size:11px;opacity:.6;font-weight:600">7</span><span>🥛</span><span>สุราขาว</span></button><button class="tab-btn" data-grad="gh-liqr"><span style="font-size:11px;opacity:.6;font-weight:600">8</span><span>🍶</span><span>สุราข้าวหอม</span></button><button class="tab-btn" data-grad="gh-rice1"><span style="font-size:11px;opacity:.6;font-weight:600">9</span><span>🚬</span><span>บุหรี่</span></button></div>
+  <div id="tab-content"><div class="ch gh-rice1"><div class="ch-left"><span class="ch-icon">🌾</span><span class="ch-title">ข้าวสาร</span></div><div class="ch-btns"><span class="ch-note">📌 ราคาส่ง 3 ลูกขึ้นไป</span></div></div><div class="tbl-wrap"><table><thead><tr><th class="al" style="width:43%">ชื่อสินค้า</th><th class="" style="width:13%">ส่ง</th><th class="" style="width:22%">เรทซื้อ</th><th class="" style="width:13%">ปลีก</th></tr></thead><tbody><tr class="sep-row"><td colspan="4" style="background:#ddeeff;padding:5px 16px">── ข้าวเพชร 101 ──</td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(45กก.) ต้นปี 69</span></td><td class=""><span class="v-set">1755</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(15กก.) ต้นปี 69</span></td><td class=""><span class="v-set">590</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">600</span></td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(5กก.) ต้นปี 69</span></td><td class=""><span class="v-set">207</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">215</span></td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(45กก.) ใหม่</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(15กก.) ใหม่</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td></tr><tr style="background:#e3f2fd"><td class="al"><span class="">ข้าวเพชร101(5กก.) ใหม่</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td><td class=""><span class="v-dash">–</span></td></tr><tr class="sep-row"><td colspan="4" style="background:#c8e6c9;padding:5px 16px">── ข้าวบัวหงษ์ ──</td></tr><tr style="background:#e8f5e9"><td class="al"><span class="">ข้าวบัวหงษ์(40กก.)</span></td><td class=""><span class="v-set">805</span></td><td class=""><span class="v-dash">—</span></td><td class=""><span class="v-dash">—</span></td></tr><tr style="background:#e8f5e9"><td class="al"><span class="">ข้าวบัวหงษ์(15กก.)</span></td><td class=""><span class="v-set">300</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">310</span></td></tr><tr style="background:#e8f5e9"><td class="al"><span class="">ข้าวบัวหงษ์(5กก.)</span></td><td class=""><span class="v-set">106</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">112</span></td></tr><tr class="sep-row"><td colspan="4" style="background:#e0e0e0;padding:5px 16px">── ข้าวคูณสอง ──</td></tr><tr style="background:#fafafa"><td class="al"><span class="">ข้าวคูณสอง(49กก.)</span></td><td class=""><span class="v-set">805</span></td><td class=""><span class="v-dash">—</span></td><td class=""><span class="v-dash">—</span></td></tr><tr style="background:#fafafa"><td class="al"><span class="">ข้าวคูณสอง(15กก.)</span></td><td class=""><span class="v-set">250</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">260</span></td></tr><tr style="background:#fafafa"><td class="al"><span class="">ข้าวคูณสอง(5กก.)</span></td><td class=""><span class="v-set">91</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">98</span></td></tr><tr class="sep-row"><td colspan="4" style="background:#fff9c4;padding:5px 16px">── ข้าวไข่เจียว ──</td></tr><tr style="background:#fffde7"><td class="al"><span class="">ข้าวไข่เจียว(50กก.)</span></td><td class=""><span class="v-set">1835</span></td><td class=""><span class="v-dash">—</span></td><td class=""><span class="v-dash">—</span></td></tr><tr style="background:#fffde7"><td class="al"><span class="">ข้าวไข่เจียว(15กก.)</span></td><td class=""><span class="v-set">570</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">560</span></td></tr><tr style="background:#fffde7"><td class="al"><span class="">ข้าวไข่เจียว(5กก.)</span></td><td class=""><span class="v-set">194</span></td><td class=""><span class="v-cond">3ลูกขึ้นไป</span></td><td class=""><span class="v-retail">200</span></td></tr></tbody></table></div></div>
+</div>
+<script>
+//%%SHOP_START%%
+const DEF_SHOP={"line1":"ร้าน นครชัยนาท","line2":"083-264-6255 ซัน","line3":"086-446-9340 Office"};
+//%%SHOP_END%%
+
+//%%DEF_START%%
+const DEF=[{"id":"rice1","title":"ข้าวสาร","sub":"","icon":"🌾","grad":"gh-rice1","note":"ราคาส่ง 3 ลูกขึ้นไป","type":"simple","cols":[{"k":"name","lb":"ชื่อสินค้า","w":"43%","al":1,"vc":""},{"k":"send","lb":"ส่ง","w":"13%","al":0,"vc":"v-set"},{"k":"cond","lb":"เรทซื้อ","w":"22%","al":0,"vc":"v-cond"},{"k":"retail","lb":"ปลีก","w":"13%","al":0,"vc":"v-retail"}],"rows":[{"_s":1,"_lb":"── ข้าวเพชร 101 ──","_bg":"#ddeeff"},{"name":"ข้าวเพชร101(45กก.) ต้นปี 69","send":1755,"cond":"-","retail":"-","_bg":"#e3f2fd","send_u":""},{"name":"ข้าวเพชร101(15กก.) ต้นปี 69","send":590,"cond":"3ลูกขึ้นไป","retail":600,"_bg":"#e3f2fd","retail_u":"","send_u":""},{"name":"ข้าวเพชร101(5กก.) ต้นปี 69","send":207,"cond":"3ลูกขึ้นไป","retail":215,"_bg":"#e3f2fd"},{"name":"ข้าวเพชร101(45กก.) ใหม่","send":"-","cond":"-","retail":"-","_bg":"#e3f2fd"},{"name":"ข้าวเพชร101(15กก.) ใหม่","send":"-","cond":"-","retail":"-","_bg":"#e3f2fd"},{"name":"ข้าวเพชร101(5กก.) ใหม่","send":"-","cond":"-","retail":"-","_bg":"#e3f2fd"},{"_s":1,"_lb":"── ข้าวบัวหงษ์ ──","_bg":"#c8e6c9"},{"name":"ข้าวบัวหงษ์(40กก.)","send":805,"cond":"","retail":"","_bg":"#e8f5e9"},{"name":"ข้าวบัวหงษ์(15กก.)","send":300,"cond":"3ลูกขึ้นไป","retail":310,"_bg":"#e8f5e9"},{"name":"ข้าวบัวหงษ์(5กก.)","send":106,"cond":"3ลูกขึ้นไป","retail":112,"_bg":"#e8f5e9"},{"_s":1,"_lb":"── ข้าวคูณสอง ──","_bg":"#e0e0e0"},{"name":"ข้าวคูณสอง(49กก.)","send":805,"cond":"","retail":"","_bg":"#fafafa"},{"name":"ข้าวคูณสอง(15กก.)","send":250,"cond":"3ลูกขึ้นไป","retail":260,"_bg":"#fafafa"},{"name":"ข้าวคูณสอง(5กก.)","send":91,"cond":"3ลูกขึ้นไป","retail":98,"_bg":"#fafafa"},{"_s":1,"_lb":"── ข้าวไข่เจียว ──","_bg":"#fff9c4"},{"name":"ข้าวไข่เจียว(50กก.)","send":1835,"cond":"","retail":"","_bg":"#fffde7"},{"name":"ข้าวไข่เจียว(15กก.)","send":570,"cond":"3ลูกขึ้นไป","retail":560,"_bg":"#fffde7"},{"name":"ข้าวไข่เจียว(5กก.)","send":194,"cond":"3ลูกขึ้นไป","retail":200,"_bg":"#fffde7"}]},{"id":"rice2","title":"ข้าวอื่นๆ","sub":"","icon":"🌾","grad":"gh-rice2","note":"ราคาส่ง 3 ลูกขึ้นไป","type":"simple","cols":[{"k":"name","lb":"ชื่อสินค้า","w":"46%","al":1,"vc":""},{"k":"send","lb":"ส่ง","w":"13%","al":0,"vc":"v-set"},{"k":"cond","lb":"เรทซื้อ","w":"22%","al":0,"vc":"v-cond"},{"k":"retail","lb":"ปลีก","w":"13%","al":0,"vc":"v-retail"}],"rows":[{"name":"ข้าวหอมใบเตย-กุหลาบ(14กก.)","send":280,"cond":"3ลูกขึ้นไป","retail":290,"_bg":"#e8f5e9"},{"name":"ข้าวคัด-สามดาว(14กก.)","send":230,"cond":"3ลูกขึ้นไป","retail":230,"_bg":"#e8f5e9"},{"name":"ข้าวหอมละมุล-ดาวเรือง(14กก.)","send":335,"cond":"3ลูกขึ้นไป","retail":335,"_bg":"#e8f5e9"}]},{"id":"egg","title":"ไข่ไก่","sub":"","icon":"🥚","grad":"gh-egg","note":"ราคาต่อแผง 30 ฟอง","type":"simple","cols":[{"k":"name","lb":"สินค้า","w":"55%","al":1,"vc":""},{"k":"send","lb":"ราคา (บาท)","w":"25%","al":0,"vc":"v-set"}],"rows":[{"name":"เบอร์ (0)","send":137,"_bg":"#fff9c4"},{"name":"เบอร์ (1)","send":127,"_bg":"#fff9c4"},{"name":"เบอร์ (2)","send":115,"_bg":"#fff9c4"},{"name":"เบอร์ (3)","send":103,"_bg":"#fff9c4"},{"name":"แผงเปล่า","send":7,"_bg":"#fff9c4"}]},{"id":"water","title":"น้ำดื่ม","sub":"","icon":"💧","grad":"gh-water","note":"น้ำหูหิ้ว 2 หิ้ว = 1 โหล","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"20%","al":0,"vc":"brand-cell"},{"k":"size","lb":"ขนาด","w":"28%","al":0,"vc":""},{"k":"price","lb":"ราคา","w":"20%","al":0,"vc":"v-set"}],"rows":[{"brand":"สิงห์","size":"300 ml.","price":45,"_bg":"#e3f2fd"},{"brand":"สิงห์","size":"600 / 1500 ml.","price":45,"_bg":"#e3f2fd"},{"brand":"คริสตัล","size":"300 ml.","price":45,"_bg":"#bbdefb"},{"brand":"คริสตัล","size":"600 / 1500 ml.","price":45,"_bg":"#bbdefb"},{"brand":"น้ำทิพย์","size":"300 ml.","price":43,"_bg":"#e3f2fd"},{"brand":"น้ำทิพย์","size":"600 / 1500 ml.","price":43,"_bg":"#e3f2fd"},{"brand":"น้ำถูก","size":"ทุกขนาด","price":30,"_bg":"#e8f5e9"},{"brand":"น้ำหูหิ้ว (โหล)","size":"-","price":37,"_bg":"#ffffff"},{"brand":"น้ำฝาดำ (โหล)","size":"-","price":39,"_bg":"#ffffff"},{"brand":"น้ำแก้ว (48แก้ว)","size":"-","price":52,"_bg":"#ffffff"}]},{"id":"beer","title":"เบียร์ โซดา","sub":"","icon":"🍺","grad":"gh-beer","note":"เบียร์ กป. ต้องซ้อชุดละ 6 กป.","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"12%","al":0,"vc":"brand-cell"},{"k":"ptype","lb":"ประเภท","w":"10%","al":0,"vc":""},{"k":"set_p","lb":"ราคาตั้ง","w":"11%","al":0,"vc":"v-set"},{"k":"buy_r","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"},{"k":"rate_p","lb":"ราคาเรท","w":"11%","al":0,"vc":"v-rate"},{"k":"retail","lb":"กป./ขวด","w":"10%","al":0,"vc":"v-retail"},{"k":"ret_r","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"}],"rows":[{"brand":"ช้าง","ptype":"ขวด","set_p":624,"buy_r":"10+","rate_p":622,"retail":"","ret_r":"","_bg":"#c8e6c9"},{"brand":"ช้าง","ptype":"กป.สั้น","set_p":748,"buy_r":"-","rate_p":"","retail":33,"ret_r":6,"_bg":"#c8e6c9"},{"brand":"ช้าง","ptype":"กป.ยาว","set_p":666,"buy_r":"-","rate_p":"","retail":"","ret_r":"","_bg":"#c8e6c9"},{"brand":"ลีโอ","ptype":"ขวด","set_p":638,"buy_r":"10+","rate_p":635,"retail":"","ret_r":"","_bg":"#ffcdd2"},{"brand":"ลีโอ","ptype":"กป.สั้น","set_p":754,"buy_r":"-","rate_p":"","retail":34,"ret_r":6,"_bg":"#ffcdd2"},{"brand":"ลีโอ","ptype":"กป.ยาว","set_p":534,"buy_r":"-","rate_p":"","retail":"","ret_r":"","_bg":"#ffcdd2"},{"brand":"สิงห์","ptype":"ขวด","set_p":683,"buy_r":"10+","rate_p":680,"retail":"","ret_r":"","_bg":"#fff9c4"},{"brand":"สิงห์","ptype":"กป.สั้น","set_p":812,"buy_r":"-","rate_p":"","retail":36,"ret_r":6,"_bg":"#fff9c4"},{"brand":"สิงห์","ptype":"กป.ยาว","set_p":596,"buy_r":"-","rate_p":"","retail":"","ret_r":"","_bg":"#fff9c4"},{"brand":"โซดาสิงห์","ptype":"วันเวย์","set_p":188,"buy_r":"-","rate_p":"","retail":9,"ret_r":"-","_bg":"#e0f7fa"},{"brand":"สปาย","ptype":"ทุกสี","set_p":620,"buy_r":"-","rate_p":"","retail":28,"ret_r":6,"_bg":"#f3e5f5"},{"brand":"ฟูลมูน","ptype":"ทุกสี","set_p":305,"buy_r":"-","rate_p":"","retail":27,"ret_r":6,"_bg":"#fce4ec"},{"brand":"ซาโต้","ptype":"ทุกสี","set_p":275,"buy_r":"-","rate_p":"","retail":25,"ret_r":"","_bg":"#fff8e1"}]},{"id":"liqc","title":"สุราสี","sub":"","icon":"🥃","grad":"gh-liqc","note":"เรทซื้อ 3 ลังขึ้นไป","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"15%","al":0,"vc":"brand-cell"},{"k":"ptype","lb":"ประเภท","w":"10%","al":0,"vc":""},{"k":"crate","lb":"ราคา","w":"13%","al":0,"vc":"v-crate"},{"k":"bottle","lb":"ขวด(ปลีก)","w":"12%","al":0,"vc":"v-set"},{"k":"bsend","lb":"ขวด(ส่ง)","w":"12%","al":0,"vc":"v-retail"},{"k":"brate","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"}],"rows":[{"brand":"หงษ์ทอง","ptype":"แบน","crate":1640,"bottle":142,"bsend":138,"brate":3,"_bg":"#c8e6c9"},{"brand":"หงษ์ทอง","ptype":"กลม","crate":2955,"bottle":255,"bsend":248,"brate":3,"_bg":"#c8e6c9"},{"brand":"หงษ์ทอง","ptype":"ลิตร","crate":4432,"bottle":380,"bsend":372,"brate":3,"_bg":"#c8e6c9"},{"brand":"แสงโสม","ptype":"แบน","crate":1706,"bottle":147,"bsend":144,"brate":3,"_bg":"#ffcdd2"},{"brand":"แสงโสม","ptype":"กลม","crate":3470,"bottle":300,"bsend":292,"brate":3,"_bg":"#ffcdd2"},{"brand":"แสงโสม","ptype":"ลิตร","crate":5025,"bottle":430,"bsend":422,"brate":3,"_bg":"#ffcdd2"},{"brand":"เบลน-ดำ","ptype":"กลม","crate":3110,"bottle":270,"bsend":262,"brate":3,"_bg":"#fff9c4"},{"brand":"เบลน-ดำ","ptype":"ลิตร","crate":4492,"bottle":385,"bsend":378,"brate":3,"_bg":"#fff9c4"},{"brand":"เบลน-ทอง","ptype":"กลม","crate":3610,"bottle":305,"bsend":302,"brate":3,"_bg":"#ffe0b2"},{"brand":"เบลน-ทอง","ptype":"ลิตร","crate":5235,"bottle":445,"bsend":440,"brate":3,"_bg":"#ffe0b2"},{"brand":"เมอริเดี้ยน","ptype":"แบน","crate":2660,"bottle":230,"bsend":224,"brate":3,"_bg":"#ccff90"},{"brand":"เมอริเดี้ยน","ptype":"กลม","crate":5665,"bottle":480,"bsend":474,"brate":3,"_bg":"#ccff90"},{"brand":"รีเจนซี่","ptype":"แบน","crate":4100,"bottle":350,"bsend":345,"brate":3,"_bg":"#b2ebf2"},{"brand":"รีเจนซี่","ptype":"กลม","crate":6100,"bottle":530,"bsend":520,"brate":3,"_bg":"#b2ebf2"}]},{"id":"liqw","title":"สุราขาว","sub":"","icon":"🥛","grad":"gh-liqw","note":"เรท(ขวด) 3 ขวดขึ้นไป","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"15%","al":0,"vc":"brand-cell"},{"k":"size","lb":"ขนาด","w":"12%","al":0,"vc":""},{"k":"crate","lb":"ราคา","w":"15%","al":0,"vc":"v-crate"},{"k":"bottle","lb":"ราคาปลีก","w":"12%","al":0,"vc":"v-set"},{"k":"bsend","lb":"ขวดส่ง","w":"11%","al":0,"vc":"v-retail"},{"k":"brate","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"}],"rows":[{"brand":"ไผ่ทอง","size":"30 ใหญ่","crate":1100,"bottle":100,"bsend":93,"brate":3,"_bg":"#fff9c4"},{"brand":"ไผ่ทอง","size":"30 เล็ก","crate":1253,"bottle":60,"bsend":53,"brate":3,"_bg":"#fff9c4"},{"brand":"ไผ่ทอง","size":"35 ใหญ่","crate":1155,"bottle":110,"bsend":97,"brate":3,"_bg":"#fff9c4"},{"brand":"ไผ่ทอง","size":"35 เล็ก","crate":1309,"bottle":65,"bsend":56,"brate":3,"_bg":"#fff9c4"},{"brand":"รวงข้าว","size":"40 ใหญ่","crate":1370,"bottle":110,"bsend":103,"brate":3,"_bg":"#b2ebf2"},{"brand":"รวงข้าว","size":"40 เล็ก","crate":1213,"bottle":70,"bsend":59,"brate":3,"_bg":"#b2ebf2"},{"brand":"ทวนทอง","size":"35 ใหญ่","crate":774,"bottle":75,"bsend":64.5,"brate":6,"_bg":"#ccff90"},{"brand":"ทวนทอง","size":"35 เล็ก","crate":912,"bottle":50,"bsend":38,"brate":12,"_bg":"#ccff90"},{"brand":"เสือขาว","size":"35 ใหญ่","crate":893,"bottle":83,"bsend":76,"brate":3,"_bg":"#fce4ec"},{"brand":"เสือขาว","size":"35 เล็ก","crate":1053,"bottle":50,"bsend":45,"brate":3,"_bg":"#fce4ec"},{"brand":"เจ้าพระยา","size":"35 ใหญ่","crate":830,"bottle":75,"bsend":71,"brate":3,"_bg":"#fff9c4"},{"brand":"มังกรท่าจีน","size":"35 ใหญ่","crate":960,"bottle":85,"bsend":81,"brate":3,"_bg":"#e8f5e9"},{"brand":"เชียงชุน","size":"ใหญ่","crate":1766,"bottle":155,"bsend":150,"brate":3,"_bg":"#ffcdd2"}]},{"id":"liqr","title":"สุราข้าวหอม","sub":"","icon":"🍶","grad":"gh-liqr","note":"เรท(ขวด) 3 ขวดขึ้นไป","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"12%","al":0,"vc":"brand-cell"},{"k":"size","lb":"ขนาด","w":"10%","al":0,"vc":""},{"k":"set_p","lb":"ราคาตั้ง","w":"12%","al":0,"vc":"v-set"},{"k":"buy_r","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"},{"k":"rate_p","lb":"ราคาเรท","w":"12%","al":0,"vc":"v-rate"},{"k":"retail","lb":"ปลีก","w":"10%","al":0,"vc":"v-retail"},{"k":"bsend","lb":"ขวดส่ง","w":"10%","al":0,"vc":"v-set"},{"k":"ret_r","lb":"เรทซื้อ","w":"10%","al":0,"vc":"v-cond"}],"rows":[{"brand":"ตะวันแดง","size":"35 ใหญ่","set_p":1126,"buy_r":"5+","rate_p":1122,"retail":100,"bsend":"","ret_r":3,"_bg":"#dcedc8"},{"brand":"ตะวันแดง","size":"35 เล็ก","set_p":657,"buy_r":"5+","rate_p":653,"retail":60,"bsend":"","ret_r":3,"_bg":"#dcedc8"},{"brand":"ตะวันแดง","size":"40 ใหญ่","set_p":1185,"buy_r":"5+","rate_p":1181,"retail":110,"bsend":"","ret_r":3,"_bg":"#c8e6c9"},{"brand":"ตะวันแดง","size":"40 เล็ก","set_p":693,"buy_r":"5+","rate_p":689,"retail":65,"bsend":"","ret_r":3,"_bg":"#c8e6c9"},{"brand":"นิยมไทย","size":"35 ใหญ่","set_p":1123,"buy_r":"-","rate_p":"-","retail":100,"bsend":95,"ret_r":3,"_bg":"#ffffff"},{"brand":"นิยมไทย","size":"35 เล็ก","set_p":650,"buy_r":"-","rate_p":"-","retail":62,"bsend":58,"ret_r":3,"_bg":"#ffffff"}]},{"id":"cat_1777455272718","title":"บุหรี่","sub":"","icon":"🚬","grad":"gh-rice1","note":"","type":"brand","cols":[{"k":"brand","lb":"ยี่ห้อ","w":"22%","al":0,"vc":"brand-cell"},{"k":"ptype","lb":"สี","w":"22%","al":0,"vc":""},{"k":"price","lb":"ราคา","w":"20%","al":0,"vc":"v-set"}],"rows":[{"brand":"SMS","ptype":"แดง/เขียว","price":655,"_bg":"#ffcdd2"},{"brand":"Wonder","ptype":"แดง/เขียว","price":655,"_bg":"#b2ebf2"},{"brand":"LM","ptype":"แดง/เขียว/สตอร์ม","price":677,"_bg":"#fff9c4"},{"brand":"LM","ptype":"เพอเพิล x ","price":679,"_bg":"#fff9c4"},{"brand":"กรองทิพย์","ptype":90,"price":975,"_bg":"#f3e5f5"},{"brand":"กรองทิพย์","ptype":7.1,"price":655,"_bg":"#f3e5f5"},{"brand":"Score","ptype":"แดง/เขียว","price":665,"_bg":"#e3f2fd"},{"brand":"Score","ptype":"ฟ้า/5.0","price":665,"_bg":"#e3f2fd"},{"brand":"Line","ptype":"7.1 เขียว","price":628,"_bg":"#ffffff"},{"brand":"Goal","ptype":"แดง","price":655,"_bg":"#ffffff"}]}];
+//%%DEF_END%%
+
+// ══════════════════════════════════════════════
+//  iOS / MOBILE HELPERS
+// ══════════════════════════════════════════════
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)||
+         (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+}
+// ซ่อน color wheel input บน iOS (ไม่รองรับ)
+(function(){
+  if(isIOS()){
+    const s=document.createElement('style');
+    s.textContent='#rcColorPick{display:none!important}';
+    document.head.appendChild(s);
+  }
+})();
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let editMode=false;
+let editSnapshot=null;
+let exportMode=false;
+let cats=load();
+let activeTab=0;
+
+function load(){try{const s=localStorage.getItem('priceV6');if(s)return JSON.parse(s);}catch(e){}return JSON.parse(JSON.stringify(DEF));}
+function save(){localStorage.setItem('priceV6',JSON.stringify(cats));}
+
+// ── BACKUP MODAL ──────────────────────────────
+function openBk(){
+  const m=document.getElementById('bkModal');
+  document.getElementById('bkTa').value=JSON.stringify({cats,shopInfo,dateStr});
+  m.classList.add('on');
+}
+function closeBk(){document.getElementById('bkModal').classList.remove('on');}
+function bkCopy(){
+  const ta=document.getElementById('bkTa');
+  const btn=event.target;
+  const doFallback=()=>{
+    ta.focus();
+    ta.setSelectionRange(0,ta.value.length);
+    try{document.execCommand('copy');}catch(e){}
+    btn.textContent='✅ คัดลอกแล้ว!';
+    setTimeout(()=>btn.textContent='📋 คัดลอกข้อมูล',2000);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      btn.textContent='✅ คัดลอกแล้ว!';
+      setTimeout(()=>btn.textContent='📋 คัดลอกข้อมูล',2000);
+    }).catch(doFallback);
+  }else{doFallback();}
+}
+function bkLoad(){
+  const raw=document.getElementById('bkTa').value.trim();
+  if(!raw)return alert('กรุณาวางข้อมูลก่อน');
+  try{
+    const d=JSON.parse(raw);
+    if(d.cats){cats=d.cats;save();}
+    if(d.shopInfo){shopInfo=d.shopInfo;localStorage.setItem('shopInfo6',JSON.stringify(shopInfo));}
+    if(d.dateStr){dateStr=d.dateStr;localStorage.setItem('pDate6',dateStr);}
+    closeBk();activeTab=0;render();
+    alert('✅ โหลดข้อมูลสำเร็จ!');
+  }catch(e){alert('❌ ข้อมูลไม่ถูกต้อง: '+e.message);}
+}
+
+// ══════════════════════════════════════════════
+//  GOOGLE SHEETS INTEGRATION
+// ══════════════════════════════════════════════
+const GS_ID='1EQw8C0qSwwJOJDnAsqrC8wVupl9wBhjo6ULOi-j18aI';
+
+// ตัด emoji และอักขระพิเศษออกจากชื่อ sheet ให้เหลือแค่ตัวอักษรปกติ
+function stripEmoji(s){
+  return s.replace(/[\u{1F000}-\u{1FFFF}]/gu,'')
+          .replace(/[☀-➿⬀-⯿︀-﻿‍]/g,'')
+          .replace(/\s+/g,' ').trim();
+}
+
+function gsFetch(sheetName,range='A3:Z2000'){
+  // ใช้ชื่อ sheet ตรงๆ ไม่ตัด emoji เพราะชื่อ tab จริงในไฟล์มี emoji นำหน้า เช่น "🌾 ข้าวสาร"
+  const cleanName=sheetName.trim();
+  return new Promise((resolve,reject)=>{
+    const cb='_gs'+Date.now()+'_'+Math.floor(Math.random()*99999);
+    let done=false;
+    const timer=setTimeout(()=>{
+      if(done)return; done=true;
+      delete window[cb];
+      reject(new Error('หมดเวลา: "'+cleanName+'"\n→ ตรวจสอบ: 1) Sheet เปิดสาธารณะแล้วหรือยัง  2) ชื่อชีตถูกต้อง'));
+    },15000);
+    window[cb]=function(data){
+      if(done)return; done=true;
+      clearTimeout(timer);
+      delete window[cb];
+      const sc=document.querySelector('script[data-gscb="'+cb+'"]');
+      if(sc)sc.parentNode.removeChild(sc);
+      try{
+        if(data.status&&data.status==='error'){
+          reject(new Error('Google Sheets error: '+(data.errors||[]).map(e=>e.detailed_message||e.message).join(', ')));
+          return;
+        }
+        const tbl=data.table;
+        const headers=(tbl.cols||[]).map(c=>c.label||'');
+        const rows=(tbl.rows||[]).map(row=>
+          (row.c||[]).map(cell=>cell&&cell.v!==null&&cell.v!==undefined?String(cell.v):'')
+        );
+        resolve({headers,rows});
+      }catch(e){reject(e);}
+    };
+    const sc=document.createElement('script');
+    sc.dataset.gscb=cb;
+    const url='https://docs.google.com/spreadsheets/d/'+GS_ID+'/gviz/tq?tqx=out:json;responseHandler:'+cb+'&sheet='+encodeURIComponent(cleanName)+'&range='+encodeURIComponent(range);
+    sc.src=url;
+    sc.onerror=()=>{
+      if(done)return; done=true;
+      clearTimeout(timer);
+      delete window[cb];
+      reject(new Error('โหลดชีต "'+cleanName+'" ไม่ได้ — ตรวจสอบชื่อชีตและการแชร์'));
+    };
+    document.head.appendChild(sc);
+  });
+}
+
+async function loadFromSheets(){
+  const ov=document.getElementById('overlay');
+  const msg=document.getElementById('ovMsg');
+  const sub=document.getElementById('ovSub');
+  ov.classList.add('on');
+  msg.textContent='🔄 กำลังเชื่อม Google Sheets...';
+  sub.textContent='';
+  try{
+    // 1. Load CONFIG sheet
+    msg.textContent='📋 โหลดรายการหมวดหมู่...';
+    const cfg=await gsFetch('หมวดหมู่');
+    // cfg.rows: each row = [id, title, icon, grad, type, note]
+    const newCats=[];
+    for(const r of cfg.rows){
+      const id=(r[0]||'').trim();
+      if(!id||id==='id')continue; // ข้าม header row ("id") ถ้า gviz ส่งมารวมใน data
+      const title=(r[1]||'').trim();
+      const icon=(r[2]||'').trim();
+      const grad=(r[3]||'').trim();
+      const type=(r[4]||'simple').trim();
+      const note=(r[5]||'').trim();
+      // Borrow cols config from DEF (preserves styling/vc/widths)
+      const defCat=DEF.find(c=>c.id===id)||DEF.find(c=>c.title===title);
+      const cols=defCat?JSON.parse(JSON.stringify(defCat.cols)):[];
+      newCats.push({id,title,icon,grad,note,type,cols,rows:[],sub:''});
+    }
+    if(!newCats.length) throw new Error('ไม่พบหมวดหมู่ใน Sheet — ตรวจสอบ Sheet "⚙️ หมวดหมู่"');
+
+    // 2. Load each category data sheet
+    for(let ci=0;ci<newCats.length;ci++){
+      const cat=newCats[ci];
+      // ใช้แค่ชื่อหมวด (ไม่มี emoji) ให้ตรงกับชื่อ tab ใน Google Sheets
+      const sName=cat.title;
+      msg.textContent='📦 โหลด '+cat.icon+' '+cat.title;
+      sub.textContent='('+(ci+1)+'/'+newCats.length+')';
+      try{
+        const d=await gsFetch(sName);
+        // ตรวจจับว่าได้รับ config sheet กลับมาแทน product sheet
+        const firstVal=(d.rows.length>0?(d.rows[0][0]||''):'').trim();
+        const isConfigData=(d.headers[0]||'')==='id'||firstVal==='id';
+
+        // ถ้าเป็นหมวดใหม่ที่ไม่มีใน DEF (cols ว่าง) ให้สร้าง cols อัตโนมัติจาก header ของ sheet
+        if(!isConfigData&&cat.cols.length===0){
+          // หา header row — อาจอยู่ใน d.headers หรือ d.rows[0]
+          let hRow=d.headers;
+          let skipFirst=false;
+          if(!(d.headers[0]||'').trim()||(d.headers[0]||'').trim().length<=2){
+            // gviz ไม่แยก header → rows[0] คือ header
+            hRow=d.rows[0]||[];
+            skipFirst=true;
+          }
+          // กรองออกแค่คอลัมข้อมูลจริง (ไม่เอา ประเภทแถว / สีพื้นหลัง)
+          const skip=/ประเภทแถว|data\/sep|สีพื้นหลัง|#rrggbb|#rr/i;
+          const dataH=hRow.filter(h=>h&&h.trim()&&!skip.test(h));
+          const vcD=['','v-set','v-cond','v-retail','v-crate','v-rate'];
+          const isBrand=cat.type==='brand';
+          cat.cols=dataH.map((h,i)=>({
+            k:i===0&&isBrand?'brand':'c'+i,
+            lb:h.trim(),
+            w:i===0?(isBrand?'20%':'38%'):'15%',
+            al:i===0?1:0,
+            vc:i===0&&isBrand?'brand-cell':(vcD[i]||'')
+          }));
+          if(skipFirst)d.rows=d.rows.slice(1);
+        }
+
+        const nCols=cat.cols.length;
+        if(!isConfigData){
+          for(const r of d.rows){
+            if(r.every(v=>!v))continue; // skip fully empty rows
+            const _type=(r[nCols]||'data').trim().toLowerCase();
+            const _bg=(r[nCols+1]||'').trim();
+            if(_type==='sep'){
+              cat.rows.push({_s:1,_lb:r[0]||'',_bg});
+            }else{
+              const obj={_bg};
+              cat.cols.forEach((col,idx)=>{
+                const val=(r[idx]||'').trim();
+                if(!val||val===''||val==='-'||val==='—'){obj[col.k]=val||'-';}
+                else{
+                  const n=parseFloat(val);
+                  obj[col.k]=(!isNaN(n)&&/^-?[\d.]+$/.test(val))?n:val;
+                }
+              });
+              cat.rows.push(obj);
+            }
+          }
+        }
+      }catch(ex){
+        console.warn('skip sheet:',sName,ex.message);
+      }
+      // ถ้าไม่ได้รับข้อมูล product ให้ใช้ข้อมูล DEF เป็น fallback
+      if(cat.rows.length===0){
+        const fb=DEF.find(c=>c.id===cat.id)||DEF.find(c=>c.title===cat.title);
+        if(fb)cat.rows=JSON.parse(JSON.stringify(fb.rows));
+      }
+    }
+
+    cats=newCats;
+    save();
+    activeTab=0;
+    dateStr=thaiNow();
+    localStorage.setItem('pDate6',dateStr);
+    ov.classList.remove('on');
+    render();
+    // Show success banner briefly
+    const banner=document.getElementById('editBanner');
+    const prev=banner.innerHTML;
+    const prevDisplay=banner.style.display;
+    banner.style.display='block';
+    banner.style.background='#e8f5e9';
+    banner.style.borderColor='#4caf50';
+    banner.style.color='#1b5e20';
+    banner.innerHTML='✅ โหลดข้อมูลจาก Google Sheets สำเร็จ! <span style="font-weight:400;font-size:13px">('+newCats.length+' หมวด)</span>';
+    setTimeout(()=>{
+      banner.innerHTML=prev;
+      banner.style.display=editMode?'block':prevDisplay;
+      banner.style.background='';
+      banner.style.borderColor='';
+      banner.style.color='';
+    },3000);
+  }catch(e){
+    ov.classList.remove('on');
+    alert('❌ โหลดจาก Google Sheets ไม่ได้\n\n'+e.message
+      +'\n\n📋 วิธีแก้:\n1. เปิด Google Sheet แล้วกด แชร์ → "ทุกคนที่มีลิงก์" (Anyone with link) → Viewer\n2. ตรวจสอบชื่อชีตว่าตรงกัน\n3. เชื่อมต่ออินเทอร์เน็ตอยู่');
+  }
+}
+
+// Shop info state
+let shopInfo=Object.assign({},DEF_SHOP);
+try{const _ss=localStorage.getItem('shopInfo6');if(_ss)shopInfo=JSON.parse(_ss);}catch(e){}
+function saveShop(){localStorage.setItem('shopInfo6',JSON.stringify(shopInfo));}
+
+let dateStr=localStorage.getItem('pDate6')||"25 เม.ย. 2569";
+function thaiNow(){const d=new Date();const m=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()+543}`;}
+function editDate(){const v=prompt('วันที่ใหม่:',dateStr);if(v){dateStr=v.trim();localStorage.setItem('pDate6',dateStr);render();}}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtVal(v,vc){
+  if(v===''||v===null||v===undefined)return '<span class="v-dash">—</span>';
+  const s=String(v);
+  if(s==='-')return '<span class="v-dash">–</span>';
+  return `<span class="${vc}">${esc(s)}</span>`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function render(){
+  document.getElementById('dateText').textContent=dateStr;
+  document.getElementById('editDateBtn').style.display=editMode?'block':'none';
+  renderShopArea();
+  renderTabs();
+  renderContent();
+}
+
+function renderShopArea(){
+  const a=document.getElementById('shopArea');
+  if(!a)return;
+  if(editMode){
+    a.innerHTML=`
+      <input class="shop-inp sl1" value="${esc(shopInfo.line1)}" placeholder="ชื่อร้าน" oninput="shopInfo.line1=this.value;saveShop()">
+      <input class="shop-inp" value="${esc(shopInfo.line2)}" placeholder="บรรทัดที่ 2" oninput="shopInfo.line2=this.value;saveShop()">
+      <input class="shop-inp" value="${esc(shopInfo.line3)}" placeholder="บรรทัดที่ 3" oninput="shopInfo.line3=this.value;saveShop()">`;
+  }else{
+    let h='<div style="text-align:right">';
+    if(shopInfo.line1)h+=`<div class="shop-view-l1">${esc(shopInfo.line1)}</div>`;
+    if(shopInfo.line2)h+=`<div class="shop-view-l2">${esc(shopInfo.line2)}</div>`;
+    if(shopInfo.line3)h+=`<div class="shop-view-l3">${esc(shopInfo.line3)}</div>`;
+    h+='</div>';
+    a.innerHTML=h;
+  }
+}
+
+function renderTabs(){
+  const bar=document.getElementById('tab-bar');
+  bar.innerHTML='';
+  cats.forEach((cat,i)=>{
+    const btn=document.createElement('button');
+    btn.className='tab-btn'+(i===activeTab?' active':'');
+    btn.dataset.grad=cat.grad;
+    btn.innerHTML=`<span class="tbn">${i+1}</span><span class="tbi">${cat.icon}</span><span class="tbt">${esc(cat.title)}</span>`;
+    btn.onclick=()=>{activeTab=i;render();};
+    bar.appendChild(btn);
+  });
+}
+
+function renderContent(){
+  const ci=activeTab;
+  const cat=cats[ci];
+  const box=document.getElementById('tab-content');
+  let h=`<div class="ch ${cat.grad}">`;
+  if(editMode){
+    h+=`<div class="ch-left">`;
+    h+=`<input class="ei-icon" value="${esc(cat.icon)}" title="เปลี่ยนอิโมติคอน" oninput="cats[${ci}].icon=this.value;save();renderTabs()">`;
+    h+=`<input class="ei-catname" value="${esc(cat.title)}" oninput="cats[${ci}].title=this.value;save();renderTabs()">`;
+    h+=`</div>`;
+  }else{
+    h+=`<div class="ch-left"><span class="ch-icon">${cat.icon}</span><span class="ch-title">${esc(cat.title)}</span></div>`;
+  }
+  h+=`<div class="ch-btns">`;
+  if(editMode){
+    h+=`<div class="ch-note-row">`;
+    h+=`<input class="ch-note-inp" value="${esc(cat.note||'')}" placeholder="📌 หมายเหตุ..." oninput="cats[${ci}].note=this.value;save()">`;
+    if(cat.note){
+      h+=`<button class="ch-note-del" onclick="cats[${ci}].note='';save();render()" title="ลบหมายเหตุ">✕</button>`;
+    }
+    h+=`</div>`;
+    h+=`<button class="btn-del-cat" onclick="delCat(${ci})">🗑 ลบหมวด</button>`;
+  }else{
+    if(cat.note) h+=`<span class="ch-note">📌 ${esc(cat.note)}</span>`;
+  }
+  h+=`</div></div>`;
+  h+=`<div class="tbl-wrap">`;
+  h+= cat.type==='simple' ? buildSimple(cat,ci) : buildBrand(cat,ci);
+  h+=`</div>`;
+  box.innerHTML=h;
+}
+
+// ── SIMPLE TABLE ──────────────────────────────
+function buildSimple(cat,ci){
+  const UNITS=['ลัง','ขวด','ถุง','แผง','แพ็ค','ถาด'];
+  const PVC=new Set(['v-set','v-rate','v-retail','v-crate']);
+  function uSel(ci2,ri,k,cur){
+    let s=`<select class="unit-sel" onchange="sv(${ci2},${ri},'${k}_u',this.value)"><option value="">– หน่วย –</option>`;
+    UNITS.forEach(u=>{s+=`<option value="${u}"${cur===u?' selected':''}>${u}</option>`;});
+    return s+`</select>`;
+  }
+  let h=`<table><thead><tr>`;
+  cat.cols.forEach((c,colIdx)=>{
+    if(editMode){
+      h+=`<th class="${c.al?'al':''}" style="width:${c.w}"><input class="ei-th" value="${esc(c.lb)}" oninput="cats[${ci}].cols[${colIdx}].lb=this.value;save()">${cat.cols.length>1?`<button class="btn-del-col" onclick="delCol(${ci},${colIdx})" title="ลบคอลัม">✕</button>`:''}</th>`;
+    }else{
+      h+=`<th class="${c.al?'al':''}" style="width:${c.w}">${esc(c.lb)}</th>`;
+    }
+  });
+  if(editMode)h+=`<th style="width:46px;text-align:center"><button class="th-add-col" onclick="openColModal(${ci})" title="เพิ่มคอลัม">+</button></th>`;
+  h+=`</tr></thead><tbody>`;
+  cat.rows.forEach((row,ri)=>{
+    if(row._s){
+      h+=`<tr class="sep-row"><td colspan="${cat.cols.length+(editMode?1:0)}" style="background:${row._bg||'#eee'};padding:5px 16px">${esc(row._lb)}</td></tr>`;
+      return;
+    }
+    h+=`<tr style="background:${row._bg||'#fff'}">`;
+    cat.cols.forEach(c=>{
+      const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
+      const u=row[c.k+'_u']||'';
+      const isPrc=PVC.has(c.vc);
+      if(editMode){
+        h+=`<td class="${c.al?'al':''}"><input class="ei ${c.al?'ei-name':'ei-num'}" value="${esc(String(disp))}" oninput="sv(${ci},${ri},'${c.k}',this.value)">`;
+        if(isPrc)h+=uSel(ci,ri,c.k,u);
+        h+=`</td>`;
+      }else{
+        const tag=isPrc&&u?`<span class="unit-sep">/</span><span class="unit-tag">${esc(u)}</span>`:'';
+        h+=`<td class="${c.al?'al':''}">${fmtVal(disp,c.vc)}${tag}</td>`;
+      }
+    });
+    if(editMode)h+=`<td style="white-space:nowrap"><button class="btn-move-row" onclick="openMvModal(${ci},${ri})" title="ย้ายบรรทัด">⇅</button><button class="btn-row-color" style="background:${row._bg||'#fff'}" onclick="openRcModal(${ci},${ri})" title="เปลี่ยนสีบรรทัด"></button><button class="btn-del-row" onclick="delRow(${ci},${ri})">✕</button></td>`;
+    h+=`</tr>`;
+  });
+  if(editMode)h+=`<tr><td colspan="${cat.cols.length+1}"><button class="btn-add-row" onclick="openAddRow(${ci})">➕ เพิ่มสินค้า</button></td></tr>`;
+  h+=`</tbody></table>`;
+  return h;
+}
+
+// ── BRAND TABLE (rowspan) ─────────────────────
+function buildBrand(cat,ci){
+  const UNITS=['ลัง','ขวด','ถุง','แผง','แพ็ค','ถาด'];
+  const PVC=new Set(['v-set','v-rate','v-retail','v-crate']);
+  function uSel(ci2,ri,k,cur){
+    let s=`<select class="unit-sel" onchange="sv(${ci2},${ri},'${k}_u',this.value)"><option value="">– หน่วย –</option>`;
+    UNITS.forEach(u=>{s+=`<option value="${u}"${cur===u?' selected':''}>${u}</option>`;});
+    return s+`</select>`;
+  }
+  let h=`<table><thead><tr>`;
+  cat.cols.forEach((c,colIdx)=>{
+    const isBrand=c.k==='brand';
+    // brand: ไม่กำหนด width ให้ auto-fit ตามเนื้อหา
+    // non-brand: ใช้ min-width px (ไม่ให้บีบช่องยี่ห้อ)
+    const thStyle=isBrand
+      ?'white-space:nowrap;padding-left:14px;padding-right:14px'
+      :`min-width:${Math.round(parseFloat(c.w)*7.5)}px`;
+    if(editMode){
+      h+=`<th style="${thStyle}"><input class="ei-th" value="${esc(c.lb)}" oninput="cats[${ci}].cols[${colIdx}].lb=this.value;save()">${cat.cols.length>1?`<button class="btn-del-col" onclick="delCol(${ci},${colIdx})" title="ลบคอลัม">✕</button>`:''}</th>`;
+    }else{
+      h+=`<th style="${thStyle}">${esc(c.lb)}</th>`;
+    }
+  });
+  if(editMode)h+=`<th style="width:46px;text-align:center"><button class="th-add-col" onclick="openColModal(${ci})" title="เพิ่มคอลัม">+</button></th>`;
+  h+=`</tr></thead><tbody>`;
+  if(editMode){
+    cat.rows.forEach((row,ri)=>{
+      h+=`<tr style="background:${row._bg||'#fff'}">`;
+      cat.cols.forEach(c=>{
+        const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
+        const u=row[c.k+'_u']||'';
+        const isPrc=PVC.has(c.vc);
+        const iw=['brand','size','ptype'].includes(c.k)?'ei-sm':'ei-num';
+        h+=`<td><input class="ei ${iw}" value="${esc(String(disp))}" oninput="sv(${ci},${ri},'${c.k}',this.value)">`;
+        if(isPrc)h+=uSel(ci,ri,c.k,u);
+        h+=`</td>`;
+      });
+      h+=`<td style="white-space:nowrap"><button class="btn-move-row" onclick="openMvModal(${ci},${ri})" title="ย้ายบรรทัด">⇅</button><button class="btn-row-color" style="background:${row._bg||'#fff'}" onclick="openRcModal(${ci},${ri})" title="เปลี่ยนสีบรรทัด"></button><button class="btn-del-row" onclick="delRow(${ci},${ri})">✕</button></td>`;
+      h+=`</tr>`;
+    });
+    h+=`<tr><td colspan="${cat.cols.length+1}"><button class="btn-add-row" onclick="openAddRow(${ci})">➕ เพิ่มสินค้า</button></td></tr>`;
+  }else if(exportMode){
+    const groups=[];let cur=null;
+    cat.rows.forEach(r=>{
+      if(!cur||r.brand!==cur.brand){cur={brand:r.brand,rows:[r],bg:r._bg};groups.push(cur);}
+      else cur.rows.push(r);
+    });
+    groups.forEach(g=>{
+      g.rows.forEach((row,ri)=>{
+        h+=`<tr style="background:${row._bg||'#fff'}">`;
+        cat.cols.forEach(c=>{
+          const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
+          const u=row[c.k+'_u']||'';
+          const isPrc=PVC.has(c.vc);
+          const tag=isPrc&&u?`<span class="unit-sep">/</span><span class="unit-tag">${esc(u)}</span>`:'';
+          if(c.k==='brand'){
+            const extra=ri===0?`border-bottom:none;`:`border-top:none;border-bottom:none;`;
+            const lastExtra=ri===g.rows.length-1?`border-bottom:1px solid #dee2e8;`:``;
+            h+=`<td class="brand-cell" style="background:${g.bg||'#fff'};${extra}${lastExtra}">${ri===0?esc(g.brand||''):''}</td>`;
+          }else{
+            h+=`<td>${fmtVal(disp,c.vc)}${tag}</td>`;
+          }
+        });
+        h+=`</tr>`;
+      });
+    });
+  }else{
+    const groups=[];let cur=null;
+    cat.rows.forEach(r=>{
+      if(!cur||r.brand!==cur.brand){cur={brand:r.brand,rows:[r],bg:r._bg};groups.push(cur);}
+      else cur.rows.push(r);
+    });
+    const nonBrand=cat.cols.filter(c=>c.k!=='brand');
+    groups.forEach(g=>{
+      g.rows.forEach((row,ri)=>{
+        h+=`<tr style="background:${row._bg||'#fff'}">`;
+        if(ri===0)h+=`<td class="brand-cell" rowspan="${g.rows.length}" style="background:${g.bg||'#fff'}">${esc(g.brand||'')}</td>`;
+        nonBrand.forEach(c=>{
+          const v=row[c.k];const disp=(v===null||v===undefined)?'':v;
+          const u=row[c.k+'_u']||'';
+          const isPrc=PVC.has(c.vc);
+          const tag=isPrc&&u?`<span class="unit-sep">/</span><span class="unit-tag">${esc(u)}</span>`:'';
+          h+=`<td>${fmtVal(disp,c.vc)}${tag}</td>`;
+        });
+        h+=`</tr>`;
+      });
+    });
+  }
+  h+=`</tbody></table>`;
+  return h;
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function sv(ci,ri,k,v){
+  if(k.endsWith('_u')){cats[ci].rows[ri][k]=v;save();return;}
+  const n=parseFloat(v);
+  cats[ci].rows[ri][k]=(!isNaN(n)&&v.trim()!==''&&/^[\d.\/\-\+\(\) ]+$/.test(v.trim()))?n:v;
+  save();
+}
+function delRow(ci,ri){cats[ci].rows.splice(ri,1);save();render();}
+// palette ตามระบบสี Google Sheets — จัดเป็นคอลัมน์ (แต่ละกลุ่มสี 4 shade จากเข้มไปอ่อน)
+const AR_COLORS=[
+  // ── Grayscale ──
+  '#000000','#434343','#666666','#999999','#b7b7b7','#cccccc','#d9d9d9','#efefef','#f3f3f3','#ffffff',
+  // ── แดง ──────── ส้ม ─────── เหลือง ───── เขียว ──────── ฟ้าเขียว ─── ฟ้า(Cornflower) น้ำเงิน ────── ม่วง ──────── ชมพู/แดงดำ
+  '#cc0000',          '#b45f06',  '#bf9000',   '#38761d',      '#134f5c',   '#1155cc',        '#1c4587',   '#351c75',      '#741b47',
+  '#e06666',          '#e69138',  '#f1c232',   '#6aa84f',      '#45818e',   '#3c78d8',        '#0b5394',   '#674ea7',      '#c27ba0',
+  '#ea9999',          '#f6b26b',  '#ffe599',   '#93c47d',      '#76a5af',   '#6d9eeb',        '#3d85c8',   '#b4a7d6',      '#d5a6bd',
+  '#f4cccc',          '#fce5cd',  '#fff2cc',   '#d9ead3',      '#d0e4f7',   '#c9daf8',        '#cfe2f3',   '#d9d2e9',      '#ead1dc',
+];
+let _arCI=-1;
+let _arColor='#ffffff';
+
+function openAddRow(ci){
+  _arCI=ci;_arColor='#ffffff';
+  const sel=document.getElementById('arPos');
+  sel.innerHTML='';
+  const rows=cats[ci].rows;
+  for(let i=0;i<=rows.length;i++){
+    const opt=document.createElement('option');
+    opt.value=i;
+    if(i===0) opt.text=`บรรทัดที่ 1 (ต้นตาราง)`;
+    else if(i===rows.length) opt.text=`บรรทัดที่ ${i+1} (ท้ายสุด)`;
+    else opt.text=`บรรทัดที่ ${i+1}`;
+    sel.appendChild(opt);
+  }
+  sel.value=rows.length;
+  const wrap=document.getElementById('arColors');
+  wrap.innerHTML='';
+  AR_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='ar-swatch'+(c===_arColor?' selected':'');
+    d.style.background=c;
+    d.title=c;
+    d.onclick=()=>{_arColor=c;wrap.querySelectorAll('.ar-swatch').forEach(s=>s.classList.remove('selected'));d.classList.add('selected');};
+    wrap.appendChild(d);
+  });
+  document.getElementById('arModal').classList.add('on');
+}
+function closeAddRow(){document.getElementById('arModal').classList.remove('on');}
+function doAddRow(){
+  const pos=parseInt(document.getElementById('arPos').value);
+  const nr={};cats[_arCI].cols.forEach(c=>{nr[c.k]='';});
+  nr._bg=_arColor;
+  cats[_arCI].rows.splice(pos,0,nr);
+  save();render();closeAddRow();
+}
+// ── MOVE ROW MODAL ──────────────────────────────
+let _mvCI=-1,_mvRI=-1;
+function openMvModal(ci,ri){
+  _mvCI=ci;_mvRI=ri;
+  const rows=cats[ci].rows;
+  const sel=document.getElementById('mvPos');
+  sel.innerHTML='';
+  for(let i=0;i<=rows.length;i++){
+    if(i===ri)continue;
+    const opt=document.createElement('option');
+    opt.value=i;
+    if(i===0) opt.text='บรรทัดที่ 1 (ต้นตาราง)';
+    else if(i===rows.length) opt.text=`ท้ายสุด (บรรทัดที่ ${i+1})`;
+    else{
+      const r=rows[i];
+      const lbl=r._s?('── '+r._lb+' ──'):(String(Object.values(r).find(v=>v&&typeof v==='string'&&!v.startsWith('#'))||'').slice(0,20)||`บรรทัดที่ ${i+1}`);
+      opt.text=`บรรทัดที่ ${i+1}: ${lbl}`;
+    }
+    sel.appendChild(opt);
+  }
+  const cur=rows[ri];
+  const sub=cur._s?cur._lb:(String(Object.values(cur).find(v=>v&&typeof v==='string'&&!v.startsWith('#'))||'').slice(0,30));
+  document.getElementById('mvSub').textContent=sub?`"${sub}"`:'';
+  document.getElementById('mvModal').classList.add('on');
+}
+function closeMvModal(){document.getElementById('mvModal').classList.remove('on');}
+function doMoveRow(){
+  const to=parseInt(document.getElementById('mvPos').value);
+  const row=cats[_mvCI].rows.splice(_mvRI,1)[0];
+  const ins=to>_mvRI?to-1:to;
+  cats[_mvCI].rows.splice(ins,0,row);
+  save();render();closeMvModal();
+}
+
+// ── ROW COLOR PICKER ────────────────────────────
+let _rcCI=-1,_rcRI=-1,_rcColor='#ffffff';
+function openRcModal(ci,ri){
+  _rcCI=ci;_rcRI=ri;
+  _rcColor=cats[ci].rows[ri]._bg||'#ffffff';
+  const wrap=document.getElementById('rcColors');
+  wrap.innerHTML='';
+  AR_COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='rc-sw'+(c===_rcColor?' selected':'');
+    d.style.background=c;
+    d.title=c;
+    d.onclick=()=>{
+      _rcColor=c;
+      wrap.querySelectorAll('.rc-sw').forEach(s=>s.classList.remove('selected'));
+      d.classList.add('selected');
+      document.getElementById('rcHexInp').value=c;
+      document.getElementById('rcColorPick').value=c;
+      document.getElementById('rcPreview').style.background=c;
+    };
+    wrap.appendChild(d);
+  });
+  document.getElementById('rcHexInp').value=_rcColor;
+  document.getElementById('rcColorPick').value=_rcColor;
+  document.getElementById('rcPreview').style.background=_rcColor;
+  document.getElementById('rcModal').classList.add('on');
+}
+function closeRcModal(){document.getElementById('rcModal').classList.remove('on');}
+function doRcColor(){
+  cats[_rcCI].rows[_rcRI]._bg=_rcColor;
+  save();render();closeRcModal();
+}
+function rcPickColor(hex){
+  _rcColor=hex;
+  document.getElementById('rcHexInp').value=hex;
+  document.getElementById('rcColorPick').value=hex;
+  document.getElementById('rcPreview').style.background=hex;
+  document.getElementById('rcColors').querySelectorAll('.rc-sw').forEach(s=>{
+    s.classList.toggle('selected',s.title===hex);
+  });
+}
+function rcHexInput(val){
+  val=val.trim();
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    rcPickColor(val);
+  } else if(/^[0-9a-fA-F]{6}$/.test(val)){
+    rcPickColor('#'+val);
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('rcModal').addEventListener('click',function(e){if(e.target===this)closeRcModal();});
+  document.getElementById('mvModal').addEventListener('click',function(e){if(e.target===this)closeMvModal();});
+});
+
+function delCat(ci){
+  if(!confirm(`ลบหมวด "${cats[ci].title}"?`))return;
+  cats.splice(ci,1);
+  if(activeTab>=cats.length)activeTab=Math.max(0,cats.length-1);
+  save();render();
+}
+
+function toggleEdit(){
+  editMode=!editMode;
+  const btn=document.getElementById('editBtn'),ban=document.getElementById('editBanner'),cnl=document.getElementById('cancelBtn');
+  if(editMode){
+    editSnapshot=JSON.parse(JSON.stringify(cats));
+    btn.textContent='✅ เสร็จแก้ไข';btn.className='tbtn tbtn-done';
+    cnl.style.display='inline-block';ban.style.display='block';
+  }else{
+    editSnapshot=null;
+    btn.textContent='✏️ แก้ไขราคา';btn.className='tbtn tbtn-edit';
+    cnl.style.display='none';ban.style.display='none';
+  }
+  render();
+}
+
+function cancelEdit(){
+  if(!editSnapshot)return;
+  if(!confirm('ยกเลิกการแก้ไขทั้งหมด? ราคาจะกลับเป็นค่าเดิมก่อนแก้ไข'))return;
+  cats=editSnapshot;
+  editSnapshot=null;
+  save();
+  editMode=false;
+  const btn=document.getElementById('editBtn'),ban=document.getElementById('editBanner'),cnl=document.getElementById('cancelBtn');
+  btn.textContent='✏️ แก้ไขราคา';btn.className='tbtn tbtn-edit';
+  cnl.style.display='none';ban.style.display='none';
+  render();
+}
+
+
+// ══════════════════════════════════════════════
+//  EXPORT helpers — แก้ rowspan bug ของ html2canvas
+//  วิธี: กำหนด height จริงให้ rowspan cell แทนการแยก
+// ══════════════════════════════════════════════
+function fixRowspanHeights(){
+  // html2canvas clips rowspan cells to first-row bounds
+  // Fix: vertical-align:top ทำให้ข้อความอยู่บนสุดของ cell (อยู่ใน first-row render area)
+  const data=[];
+  document.querySelectorAll('td[rowspan]').forEach(cell=>{
+    const prevVA=cell.style.verticalAlign||'';
+    const prevPT=cell.style.paddingTop||'';
+    // คำนวณ padding-top เพื่อให้ข้อความดูเหมือน middle แต่จริงๆอยู่ใน first-row
+    const h=cell.getBoundingClientRect().height;
+    const firstRowH=cell.parentElement.getBoundingClientRect().height;
+    const pt=Math.max(0,Math.floor((firstRowH-24)/2)); // center ใน first row
+    cell.style.verticalAlign='top';
+    cell.style.paddingTop=pt+'px';
+    data.push({cell,prevVA,prevPT});
+  });
+  return data;
+}
+function restoreRowspanHeights(data){
+  data.forEach(({cell,prevVA,prevPT})=>{
+    cell.style.verticalAlign=prevVA;
+    cell.style.paddingTop=prevPT;
+  });
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT — ส่ง LINE
+// ══════════════════════════════════════════════
+function openExp(){
+  // สร้าง checkbox list ของทุก category
+  const list=document.getElementById('expList');
+  list.innerHTML='';
+  cats.forEach((cat,i)=>{
+    const lbl=document.createElement('label');
+    lbl.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:9px;background:#f5f7fa;cursor:pointer;font-size:14px;min-height:48px;-webkit-tap-highlight-color:transparent';
+    lbl.innerHTML=`<input type="checkbox" class="exp-cb-item" value="${i}" checked style="width:22px;height:22px;accent-color:#1565c0;cursor:pointer;flex-shrink:0">
+      <span style="font-size:18px">${cat.icon}</span>
+      <span style="font-weight:600;color:#1a237e;font-size:15px">${esc(cat.title)}</span>
+      <span style="margin-left:auto;font-size:12px;color:#888;white-space:nowrap">${cat.rows.length} รายการ</span>`;
+    list.appendChild(lbl);
+    // sync ตัวนับเมื่อ checkbox เปลี่ยน
+    lbl.querySelector('input').addEventListener('change', syncExpAll);
+  });
+  // เซต "เลือกทั้งหมด" เป็น checked
+  const allCb=document.getElementById('expAllCb');
+  allCb.checked=true;
+  allCb.indeterminate=false;
+  document.getElementById('expModal').classList.add('on');
+}
+
+function closeExp(){
+  document.getElementById('expModal').classList.remove('on');
+}
+
+function toggleExpAll(masterCb){
+  document.querySelectorAll('.exp-cb-item').forEach(cb=>{cb.checked=masterCb.checked;});
+  masterCb.indeterminate=false;
+}
+
+function syncExpAll(){
+  const all=document.querySelectorAll('.exp-cb-item');
+  const checked=document.querySelectorAll('.exp-cb-item:checked');
+  const master=document.getElementById('expAllCb');
+  if(checked.length===0){master.checked=false;master.indeterminate=false;}
+  else if(checked.length===all.length){master.checked=true;master.indeterminate=false;}
+  else{master.checked=false;master.indeterminate=true;}
+}
+
+async function doExportSelected(){
+  const checks=document.querySelectorAll('.exp-cb-item:checked');
+  if(!checks.length){alert('เลือกอย่างน้อย 1 หมวดนะครับ');return;}
+  const idxs=Array.from(checks).map(c=>parseInt(c.value));
+  closeExp();
+
+  const origTab=activeTab;
+  const wasEdit=editMode;
+  if(wasEdit){editMode=false;}
+
+  // ซ่อน toolbar และ banner
+  const tb=document.getElementById('toolbar');
+  const bn=document.getElementById('editBanner');
+  const tabBar=document.getElementById('tab-bar');
+  const ov=document.getElementById('overlay');
+  const ovMsg=document.getElementById('ovMsg');
+  const ovSub=document.getElementById('ovSub');
+  tb.style.display='none';
+  bn.style.display='none';
+
+  // ย้าย tab-bar ออกนอก wrapper ชั่วคราว แล้วแก้ wrapper เป็น single-column
+  const wrapEl=document.getElementById('wrapper');
+  const tabBarParent=tabBar.parentNode;
+  const tabBarNextSibling=tabBar.nextSibling;
+  document.body.appendChild(tabBar); // ย้ายออกนอก wrapper (ยังอยู่ใน DOM ให้ getElementById เจอได้)
+  const origGridCols=wrapEl.style.gridTemplateColumns;
+  const origBg=wrapEl.style.background;
+  wrapEl.style.gridTemplateColumns='1fr';
+  wrapEl.style.background='#fff';
+
+  // style ชั่วคราวแก้ข้อความหายใน html2canvas (rowspan + overflow)
+  const capStyle=document.createElement('style');
+  capStyle.id='__cap_fix__';
+  capStyle.textContent=`
+    td { overflow:visible !important; }
+    td.brand-cell { overflow:visible !important; white-space:normal !important; word-break:break-word !important; }
+    .tbl-wrap { overflow:visible !important; }
+    #tab-content { overflow:visible !important; }
+  `;
+  document.head.appendChild(capStyle);
+
+  ov.style.display='flex';
+  const canvases=[];
+
+  for(let ii=0;ii<idxs.length;ii++){
+    const idx=idxs[ii];
+    ovMsg.textContent=`📸 กำลังแคป: ${cats[idx].icon} ${cats[idx].title}`;
+    ovSub.textContent=`${ii+1} / ${idxs.length}`;
+    activeTab=idx;
+    render();
+    await new Promise(r=>setTimeout(r,300)); // รอ render + font load
+    // set height จริงให้ rowspan cells (แก้บั๊ก html2canvas clipping)
+    const rsData=fixRowspanHeights();
+    await new Promise(r=>setTimeout(r,50));
+    const cv=await html2canvas(document.getElementById('wrapper'),{
+      scale:2.5,
+      useCORS:true,
+      backgroundColor:'#dde4ed',
+      logging:false,
+      allowTaint:true,
+      foreignObjectRendering:false
+    });
+    restoreRowspanHeights(rsData); // คืนค่าเดิม
+    canvases.push({title:cats[idx].title,icon:cats[idx].icon,cv});
+  }
+
+  // คืนค่าเดิม
+  document.getElementById('__cap_fix__').remove();
+  wrapEl.style.gridTemplateColumns=origGridCols;
+  wrapEl.style.background=origBg;
+  // เอา tab-bar กลับเข้า wrapper ตำแหน่งเดิม (หลัง datebar)
+  if(tabBarNextSibling){tabBarParent.insertBefore(tabBar,tabBarNextSibling);}
+  else{tabBarParent.appendChild(tabBar);}
+  tabBar.style.display='';
+  tb.style.display='';
+  bn.style.display='';
+  ov.style.display='none';
+  activeTab=origTab;
+  if(wasEdit){editMode=true;}
+  render();
+
+  // สร้างชื่อไฟล์
+  const now=new Date();
+  const dd=now.getDate().toString().padStart(2,'0');
+  const mm=(now.getMonth()+1).toString().padStart(2,'0');
+  const yy=now.getFullYear();
+  const dateTag=dd+'-'+mm+'-'+yy;
+
+  // ─── iOS / Android: Web Share API หรือแสดงรูปให้กดค้างบันทึก ───
+  if(isIOS()){
+    // ลอง Web Share API ก่อน (iOS 15+)
+    if(navigator.canShare){
+      try{
+        const files=[];
+        for(const item of canvases){
+          const blob=await new Promise(res=>item.cv.toBlob(res,'image/png'));
+          files.push(new File([blob],'ราคา_'+item.title+'_'+dateTag+'.png',{type:'image/png'}));
+        }
+        if(navigator.canShare({files})){
+          await navigator.share({files,title:'ราคาสินค้า '+shopInfo.line1});
+          return;
+        }
+      }catch(e){
+        if(e.name==='AbortError')return; // ผู้ใช้กดยกเลิก
+        console.warn('Web Share failed:',e);
+        // fall through to modal
+      }
+    }
+    // Fallback: แสดงรูปในหน้า ให้ผู้ใช้กดค้างบันทึก
+    const modal=document.getElementById('iosModal');
+    const imgCont=document.getElementById('iosImgs');
+    imgCont.innerHTML='';
+    canvases.forEach(item=>{
+      const wrap=document.createElement('div');
+      const lbl=document.createElement('div');
+      lbl.style.cssText='color:rgba(255,255,255,.8);font-size:13px;font-weight:700;text-align:center;margin-bottom:6px';
+      lbl.textContent=item.icon+' '+item.title;
+      const img=document.createElement('img');
+      img.src=item.cv.toDataURL('image/png');
+      img.style.cssText='width:100%;border-radius:10px;display:block;box-shadow:0 4px 20px rgba(0,0,0,.5);-webkit-touch-callout:default';
+      wrap.appendChild(lbl);
+      wrap.appendChild(img);
+      imgCont.appendChild(wrap);
+    });
+    modal.style.display='flex';
+    return;
+  }
+
+  // ─── Desktop: download ตามปกติ ───
+  if(canvases.length===1){
+    // ดาวน์โหลดเดี่ยว
+    const a=document.createElement('a');
+    a.href=canvases[0].cv.toDataURL('image/png');
+    a.download='ราคา_'+canvases[0].title+'_'+dateTag+'.png';
+    a.click();
+  } else {
+    // หลายหมวด → ZIP
+    ovMsg.textContent='📦 กำลังบีบอัด ZIP...';
+    ovSub.textContent='';
+    ov.style.display='flex';
+    const zip=new JSZip();
+    canvases.forEach((item,i)=>{
+      const b64=item.cv.toDataURL('image/png').split(',')[1];
+      const name=(i+1).toString().padStart(2,'0')+'_'+item.title+'_'+dateTag+'.png';
+      zip.file(name,b64,{base64:true});
+    });
+    const blob=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='ราคาสินค้า_'+dateTag+'.zip';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+    ov.style.display='none';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  ใบราคา A4
+// ══════════════════════════════════════════════
+function openA4(){
+  var data=cats, shop=shopInfo;
+  var gm={
+    'gh-rice1':'linear-gradient(135deg,#0d47a1,#1565c0,#1976d2)',
+    'gh-rice2':'linear-gradient(135deg,#1b5e20,#2e7d32,#388e3c)',
+    'gh-egg'  :'linear-gradient(135deg,#e65100,#f57f17,#fb8c00)',
+    'gh-water':'linear-gradient(135deg,#01579b,#0277bd,#0288d1)',
+    'gh-beer' :'linear-gradient(135deg,#7f0000,#b71c1c,#c62828)',
+    'gh-liqc' :'linear-gradient(135deg,#004d40,#00695c,#00796b)',
+    'gh-liqw' :'linear-gradient(135deg,#4a148c,#6a1b9a,#7b1fa2)',
+    'gh-liqr' :'linear-gradient(135deg,#4e342e,#6d4c41,#8d6e63)',
+    'gh-pink' :'linear-gradient(135deg,#880e4f,#c2185b,#e91e63)',
+    'gh-cyan' :'linear-gradient(135deg,#006064,#00838f,#0097a7)',
+    'gh-lime' :'linear-gradient(135deg,#558b2f,#6a9f35,#7cb342)',
+    'gh-indigo':'linear-gradient(135deg,#283593,#3949ab,#5c6bc0)',
+    'gh-red'   :'linear-gradient(135deg,#b71c1c,#c62828,#e53935)',
+    'gh-amber' :'linear-gradient(135deg,#bf360c,#d84315,#e64a19)',
+    'gh-yellow':'linear-gradient(135deg,#bf9000,#f57f17,#fbc02d)',
+    'gh-navy'  :'linear-gradient(135deg,#0a0e4f,#1a237e,#283593)',
+    'gh-violet':'linear-gradient(135deg,#4527a0,#512da8,#5e35b1)',
+    'gh-gray-d':'linear-gradient(135deg,#212121,#37474f,#455a64)',
+    'gh-gray'  :'linear-gradient(135deg,#37474f,#455a64,#546e7a)',
+    'gh-red-l' :'linear-gradient(135deg,#c62828,#e53935,#f44336)',
+    'gh-yellow-l':'linear-gradient(135deg,#fbc02d,#fdd835,#ffee58)',
+    'gh-green-l':'linear-gradient(135deg,#43a047,#4caf50,#66bb6a)',
+    'gh-mint'  :'linear-gradient(135deg,#00897b,#26a69a,#4db6ac)',
+    'gh-sky'   :'linear-gradient(135deg,#039be5,#29b6f6,#4fc3f7)',
+    'gh-blue-l':'linear-gradient(135deg,#1e88e5,#2196f3,#42a5f5)',
+    'gh-purple-l':'linear-gradient(135deg,#8e24aa,#9c27b0,#ab47bc)',
+    'gh-rose'  :'linear-gradient(135deg,#e91e63,#ec407a,#f06292)',
+    'gh-gray-l':'linear-gradient(135deg,#607d8b,#78909c,#90a4ae)'
+  };
+  var vc={
+    'v-set'    :{c:'#1565c0',fw:'900',fs:'26px'},
+    'v-retail' :{c:'#c62828',fw:'900',fs:'26px'},
+    'v-rate'   :{c:'#e65100',fw:'900',fs:'26px'},
+    'v-crate'  :{c:'#2e7d32',fw:'900',fs:'26px'},
+    'v-cond'   :{c:'#555',   fw:'700',fs:'17px'},
+    'brand-cell':{c:'#1a237e',fw:'900',fs:'20px'},
+    ''         :{c:'#222',   fw:'700',fs:'19px'}
+  };
+  function fmt(v){
+    if(v===''||v===null||v===undefined||v==='-'||v==='--'||v==='—')return '—';
+    var s=String(v).trim();
+    var n=parseFloat(s);
+    // ตรวจว่าเป็นตัวเลขล้วน (ไม่ใช่ "35 ใหญ่" หรือ "10+")
+    if(!isNaN(n)&&s!==''&&/^-?[\d,]+(\.[\d]+)?$/.test(s))
+      return n%1===0?n.toLocaleString():(+n.toFixed(1)).toLocaleString();
+    return s;
+  }
+  function buildPage(cat){
+    var grad=gm[cat.grad]||'linear-gradient(135deg,#37474f,#455a64)';
+    var noteH=cat.note?'<span class="chnote">'+cat.note+'</span>':'';
+    var cols=cat.cols;
+    var h='<div class="a4page"><div class="cathdr" style="background:'+grad+'">'
+      +'<span class="cico">'+cat.icon+'</span>'
+      +'<span class="ctit">'+cat.title+'</span>'+noteH+'</div>'
+      +'<table><thead><tr>';
+    cols.forEach(function(col){
+      h+='<th style="width:'+col.w+';text-align:'+(col.al?'left':'center')+'">'+col.lb+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    cat.rows.forEach(function(row){
+      if(row._s){
+        h+='<tr><td colspan="'+cols.length+'" class="seprow" style="background:'+(row._bg||'#f0f2f5')+'">'+row._lb+'</td></tr>';
+      } else {
+        h+='<tr style="background:'+(row._bg||'#fff')+'">';
+        cols.forEach(function(col){
+          var st=vc[col.vc]||vc[''];
+          var ta=col.al?'left':'center';
+          var cls=col.vc==='brand-cell'?' class="brcell"':'';
+          h+='<td'+cls+' style="color:'+st.c+';font-weight:'+st.fw+';font-size:'+st.fs+';text-align:'+ta+'">'+fmt(row[col.k])+'</td>';
+        });
+        h+='</tr>';
+      }
+    });
+    h+='</tbody></table></div>';
+    return h;
+  }
+  var pages='';
+  data.forEach(function(cat){pages+=buildPage(cat);});
+  var today=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  var html='<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">'
+    +'<title>ใบราคาสินค้า A4</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
+    +'<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>'
+    +'<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>'
+    +'<style>'
+    +'*{margin:0;padding:0;box-sizing:border-box}'
+    +'body{font-family:Sarabun,sans-serif;background:#dde4ed}'
+    +'#tb{background:#1a237e;padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:99;box-shadow:0 3px 12px rgba(0,0,0,.3)}'
+    +'#tb h2{color:#fff;font-size:16px;font-weight:800;flex:1}'
+    +'.btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-family:Sarabun,sans-serif;font-size:15px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25);transition:.15s}'
+    +'.btn:hover{transform:translateY(-1px)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}'
+    +'.bp{background:linear-gradient(135deg,#2e7d32,#1b5e20);color:#fff}'
+    +'.be{background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff}'
+    +'.bc{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)}'
+    +'#pgov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;font-family:Sarabun,sans-serif}'
+    +'#pgov.on{display:flex}'
+    +'#pgmsg{font-size:22px;font-weight:800}'
+    +'#pgbar{width:280px;height:12px;background:rgba(255,255,255,.2);border-radius:10px;overflow:hidden}'
+    +'#pgfill{height:100%;background:#ef9a9a;border-radius:10px;transition:width .25s;width:0}'
+    +'#pages{padding:20px;display:flex;flex-direction:column;gap:20px}'
+    +'.a4page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:8mm 10mm;border-radius:4px;box-shadow:0 4px 24px rgba(0,0,0,.18);page-break-after:always;break-after:page}'
+    +'.cathdr{border-radius:12px;padding:13px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;color:#fff}'
+    +'.cico{font-size:36px;line-height:1}'
+    +'.ctit{font-size:30px;font-weight:900;letter-spacing:.5px}'
+    +'.chnote{margin-left:auto;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:5px 16px;font-size:15px;font-weight:800;white-space:nowrap}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'thead tr{background:#f0f2f5}'
+    +'th{padding:13px 10px;font-weight:800;font-size:17px;color:#1a237e;border-bottom:2.5px solid #dee2e8;text-align:center;white-space:nowrap}'
+    +'td{padding:13px 10px;border-bottom:1px solid #ebebeb;vertical-align:middle}'
+    +'tbody tr:last-child td{border-bottom:none}'
+    +'.brcell{border-right:2.5px solid #dee2e8;text-align:center!important}'
+    +'.seprow{font-weight:800!important;font-size:16px!important;color:#444!important;padding:7px 16px!important;border-top:1.5px solid #e0e0e0}'
+    +'@media print{'
+    +'#tb,#pgov{display:none!important}'
+    +'body{background:#fff}'
+    +'#pages{padding:0;gap:0}'
+    +'.a4page{box-shadow:none;border-radius:0;margin:0;padding:8mm 10mm;width:210mm;height:297mm}'
+    +'}'
+    +'</style></head><body>'
+    +'<div id="pgov"><div id="pgmsg">กำลังสร้าง PDF...</div><div style="font-size:14px;opacity:.8;margin-top:-4px">กรุณารอสักครู่</div><div id="pgbar"><div id="pgfill"></div></div></div>'
+    +'<div id="tb"><h2>🖨️ ใบราคาสินค้า A4 — '+shop.line1+' | '+today+'</h2>'
+    +'<button class="btn bp" onclick="window.print()">🖨️ พิมพ์ / Save PDF</button>'
+    +'<button class="btn be" id="bpe" onclick="xpdf()">📄 Export PDF</button>'
+    +'<button class="btn bc" onclick="window.close()">✕ ปิด</button></div>'
+    +'<div id="pages">'+pages+'</div>'
+    +'<script>'
+    +'(function(){var ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);'
+    +'if(ios){var bpe=document.getElementById("bpe");if(bpe)bpe.style.display="none";'
+    +'var tb=document.getElementById("tb");var hint=document.createElement("span");'
+    +'hint.style.cssText="color:rgba(255,255,255,.8);font-size:12px;font-weight:600;align-self:center";'
+    +'hint.textContent="💡 iOS: กด พิมพ์ → แชร์ → Save to Files เพื่อบันทึก PDF";tb.appendChild(hint);}})();'
+    +'async function xpdf(){'
+    +'var btn=document.getElementById("bpe");btn.disabled=true;'
+    +'var ov=document.getElementById("pgov"),fill=document.getElementById("pgfill"),msg=document.getElementById("pgmsg");'
+    +'ov.classList.add("on");'
+    +'var pdf=new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:"a4",compress:true});'
+    +'var pgs=document.querySelectorAll(".a4page");'
+    +'var A4W=595.28,A4H=841.89;'
+    +'for(var i=0;i<pgs.length;i++){'
+    +'msg.textContent="📄 กำลังสร้าง... หน้า "+(i+1)+"/"+pgs.length;'
+    +'fill.style.width=Math.round(i/pgs.length*92)+"%";'
+    +'await new Promise(function(r){setTimeout(r,40);});'
+    +'var cv=await html2canvas(pgs[i],{scale:2.5,useCORS:true,backgroundColor:"#fff",logging:false});'
+    +'var img=cv.toDataURL("image/jpeg",0.93);'
+    +'if(i>0)pdf.addPage("a4","portrait");'
+    +'pdf.addImage(img,"JPEG",0,0,A4W,A4H);}'
+    +'fill.style.width="100%";msg.textContent="✅ บันทึกไฟล์...";'
+    +'await new Promise(function(r){setTimeout(r,120);});'
+    +'pdf.save("ใบราคา_A4.pdf");'
+    +'ov.classList.remove("on");btn.disabled=false;}'
+    +'<\/script></body></html>';
+  // ใช้ Blob URL แทน document.write (รองรับ iOS Safari popup)
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var burl=URL.createObjectURL(blob);
+  var w=window.open(burl,'_blank');
+  if(!w){
+    // popup ถูกบล็อก → นำทางในแท็บเดียวกัน
+    location.href=burl;
+  }
+  setTimeout(function(){URL.revokeObjectURL(burl);},120000);
+}
+
+render();
+</script>
+</body>
+</html>
