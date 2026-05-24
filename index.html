@@ -491,6 +491,9 @@ function gsFetch(sheetName,range='A3:Z2000'){
 }
 
 let _gsLoading=false;
+// iOS pre-render: เก็บ File objects ที่เตรียมไว้ขณะ user เลือกหมวด
+let _expPrebuiltFiles=null;
+let _expPrebuiltBusy=false;
 async function loadFromSheets(silent=false){
   if(_gsLoading)return;
   _gsLoading=true;
@@ -842,6 +845,21 @@ function openExp(){
   allCb.checked=true;
   allCb.indeterminate=false;
   document.getElementById('expModal').classList.add('on');
+
+  // iOS: เตรียมไฟล์ล่วงหน้าขณะ user เลือกหมวด → ทำให้ navigator.share() ทำงานทันที
+  if(isIOS()&&navigator.canShare&&!_expPrebuiltBusy){
+    _expPrebuiltFiles=null;
+    _expPrebuiltBusy=true;
+    const shareBtn=document.querySelector('#expBox .bk-copy');
+    if(shareBtn){shareBtn.textContent='⏳ กำลังเตรียม...';shareBtn.disabled=true;}
+    _preRenderAllFiles().then(()=>{
+      _expPrebuiltBusy=false;
+      if(shareBtn){shareBtn.textContent='📸 ส่ง LINE';shareBtn.disabled=false;}
+    }).catch(()=>{
+      _expPrebuiltBusy=false;
+      if(shareBtn){shareBtn.textContent='📸 ส่ง LINE';shareBtn.disabled=false;}
+    });
+  }
 }
 
 function closeExp(){
@@ -862,11 +880,85 @@ function syncExpAll(){
   else{master.checked=false;master.indeterminate=true;}
 }
 
+// ── เตรียม File objects ของทุกหมวดในพื้นหลัง (iOS pre-render) ──
+async function _preRenderAllFiles(){
+  const CAPTURE_W=720;
+  const tb=document.getElementById('toolbar');
+  const syncBar=document.getElementById('syncBar');
+  const tabBar=document.getElementById('tab-bar');
+  const wrapEl=document.getElementById('wrapper');
+  const origTab=activeTab;
+  tb.style.display='none';
+  if(syncBar)syncBar.style.display='none';
+  const tabBarParent=tabBar.parentNode;
+  const tabBarNextSibling=tabBar.nextSibling;
+  document.body.appendChild(tabBar);
+  const origWidth=wrapEl.style.width;
+  const origMaxWidth=wrapEl.style.maxWidth;
+  wrapEl.style.width=CAPTURE_W+'px';
+  wrapEl.style.maxWidth=CAPTURE_W+'px';
+  wrapEl.style.background='#fff';
+  const capStyle=document.createElement('style');
+  capStyle.id='__cap_pre__';
+  capStyle.textContent=`td{overflow:visible!important;}td.brand-cell{overflow:visible!important;white-space:normal!important;word-break:break-word!important;}.tbl-wrap{overflow:visible!important;width:100%!important;}#tab-content{overflow:visible!important;}table{width:100%!important;}`;
+  document.head.appendChild(capStyle);
+  const now=new Date();
+  const dd=now.getDate().toString().padStart(2,'0');
+  const mm2=(now.getMonth()+1).toString().padStart(2,'0');
+  const yy=now.getFullYear();
+  const dateTag=dd+'-'+mm2+'-'+yy;
+  const files={};
+  try{
+    for(let i=0;i<cats.length;i++){
+      activeTab=i;render();
+      await new Promise(r=>setTimeout(r,300));
+      const rsData=fixRowspanHeights();
+      await new Promise(r=>setTimeout(r,60));
+      const cv=await html2canvas(document.getElementById('wrapper'),{
+        scale:2,useCORS:true,backgroundColor:'#ffffff',
+        logging:false,allowTaint:true,foreignObjectRendering:false,
+        width:CAPTURE_W,windowWidth:CAPTURE_W+40
+      });
+      restoreRowspanHeights(rsData);
+      const blob=await new Promise(res=>cv.toBlob(res,'image/png'));
+      files[i]=new File([blob],(i+1)+'_ราคา_'+cats[i].title+'_'+dateTag+'.png',{type:'image/png'});
+    }
+    _expPrebuiltFiles=files;
+  }finally{
+    const fix=document.getElementById('__cap_pre__');
+    if(fix)fix.remove();
+    wrapEl.style.width=origWidth;
+    wrapEl.style.maxWidth=origMaxWidth;
+    wrapEl.style.background='';
+    if(tabBarNextSibling){tabBarParent.insertBefore(tabBar,tabBarNextSibling);}
+    else{tabBarParent.appendChild(tabBar);}
+    tabBar.style.display='';
+    tb.style.display='';
+    if(syncBar)syncBar.style.display='';
+    activeTab=origTab;render();
+  }
+  return files;
+}
+
 async function doExportSelected(){
   const checks=document.querySelectorAll('.exp-cb-item:checked');
   if(!checks.length){alert('เลือกอย่างน้อย 1 หมวดนะครับ');return;}
   const idxs=Array.from(checks).map(c=>parseInt(c.value));
   closeExp();
+
+  // ─── iOS: ใช้ไฟล์ที่เตรียมไว้แล้ว → navigator.share() ทำงานทันที ───
+  if(isIOS()&&navigator.canShare&&_expPrebuiltFiles){
+    try{
+      const selectedFiles=idxs.map(idx=>_expPrebuiltFiles[idx]).filter(Boolean);
+      if(selectedFiles.length&&navigator.canShare({files:selectedFiles})){
+        await navigator.share({files:selectedFiles,title:'ราคาสินค้า '+shopInfo.line1});
+        return;
+      }
+    }catch(e){
+      if(e.name==='AbortError')return;
+      console.warn('Web Share (pre-built) failed:',e);
+    }
+  }
 
   const origTab=activeTab;
   const CAPTURE_W=720; // ความกว้างคงที่สำหรับ capture → ทุกคอลัมครบเสมอ
