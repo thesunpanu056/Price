@@ -869,33 +869,37 @@ async function doExportSelected(){
   closeExp();
 
   const origTab=activeTab;
+  const CAPTURE_W=720; // ความกว้างคงที่สำหรับ capture → ทุกคอลัมครบเสมอ
 
-  // ซ่อน toolbar
   const tb=document.getElementById('toolbar');
+  const syncBar=document.getElementById('syncBar');
   const tabBar=document.getElementById('tab-bar');
   const ov=document.getElementById('overlay');
   const ovMsg=document.getElementById('ovMsg');
   const ovSub=document.getElementById('ovSub');
   tb.style.display='none';
+  if(syncBar)syncBar.style.display='none';
 
-  // ย้าย tab-bar ออกนอก wrapper ชั่วคราว แล้วแก้ wrapper เป็น single-column
+  // ย้าย tab-bar ออก + fix wrapper width
   const wrapEl=document.getElementById('wrapper');
   const tabBarParent=tabBar.parentNode;
   const tabBarNextSibling=tabBar.nextSibling;
-  document.body.appendChild(tabBar); // ย้ายออกนอก wrapper (ยังอยู่ใน DOM ให้ getElementById เจอได้)
-  const origGridCols=wrapEl.style.gridTemplateColumns;
-  const origBg=wrapEl.style.background;
-  wrapEl.style.gridTemplateColumns='1fr';
+  document.body.appendChild(tabBar);
+  const origWidth=wrapEl.style.width;
+  const origMaxWidth=wrapEl.style.maxWidth;
+  wrapEl.style.width=CAPTURE_W+'px';
+  wrapEl.style.maxWidth=CAPTURE_W+'px';
   wrapEl.style.background='#fff';
 
-  // style ชั่วคราวแก้ข้อความหายใน html2canvas (rowspan + overflow)
+  // แก้ overflow ชั่วคราวให้ html2canvas เห็นทุกคอลัม
   const capStyle=document.createElement('style');
   capStyle.id='__cap_fix__';
   capStyle.textContent=`
-    td { overflow:visible !important; }
-    td.brand-cell { overflow:visible !important; white-space:normal !important; word-break:break-word !important; }
-    .tbl-wrap { overflow:visible !important; }
-    #tab-content { overflow:visible !important; }
+    td{overflow:visible!important;}
+    td.brand-cell{overflow:visible!important;white-space:normal!important;word-break:break-word!important;}
+    .tbl-wrap{overflow:visible!important;width:100%!important;}
+    #tab-content{overflow:visible!important;}
+    table{width:100%!important;}
   `;
   document.head.appendChild(capStyle);
 
@@ -906,68 +910,64 @@ async function doExportSelected(){
     const idx=idxs[ii];
     ovMsg.textContent=`📸 กำลังแคป: ${cats[idx].icon} ${cats[idx].title}`;
     ovSub.textContent=`${ii+1} / ${idxs.length}`;
-    activeTab=idx;
-    render();
-    await new Promise(r=>setTimeout(r,300)); // รอ render + font load
-    // set height จริงให้ rowspan cells (แก้บั๊ก html2canvas clipping)
+    activeTab=idx; render();
+    await new Promise(r=>setTimeout(r,350));
     const rsData=fixRowspanHeights();
-    await new Promise(r=>setTimeout(r,50));
+    await new Promise(r=>setTimeout(r,60));
     const cv=await html2canvas(document.getElementById('wrapper'),{
-      scale:2.5,
-      useCORS:true,
-      backgroundColor:'#dde4ed',
-      logging:false,
-      allowTaint:true,
-      foreignObjectRendering:false
+      scale:2,useCORS:true,backgroundColor:'#ffffff',
+      logging:false,allowTaint:true,foreignObjectRendering:false,
+      width:CAPTURE_W,windowWidth:CAPTURE_W+40
     });
-    restoreRowspanHeights(rsData); // คืนค่าเดิม
+    restoreRowspanHeights(rsData);
     canvases.push({title:cats[idx].title,icon:cats[idx].icon,cv});
   }
 
-  // คืนค่าเดิม
+  // คืนค่าทุกอย่าง
   document.getElementById('__cap_fix__').remove();
-  wrapEl.style.gridTemplateColumns=origGridCols;
-  wrapEl.style.background=origBg;
-  // เอา tab-bar กลับเข้า wrapper ตำแหน่งเดิม (หลัง datebar)
+  wrapEl.style.width=origWidth;
+  wrapEl.style.maxWidth=origMaxWidth;
+  wrapEl.style.background='';
   if(tabBarNextSibling){tabBarParent.insertBefore(tabBar,tabBarNextSibling);}
   else{tabBarParent.appendChild(tabBar);}
   tabBar.style.display='';
   tb.style.display='';
+  if(syncBar)syncBar.style.display='';
   ov.style.display='none';
-  activeTab=origTab;
-  render();
+  activeTab=origTab; render();
 
-  // สร้างชื่อไฟล์
   const now=new Date();
   const dd=now.getDate().toString().padStart(2,'0');
-  const mm=(now.getMonth()+1).toString().padStart(2,'0');
+  const mm2=(now.getMonth()+1).toString().padStart(2,'0');
   const yy=now.getFullYear();
-  const dateTag=dd+'-'+mm+'-'+yy;
+  const dateTag=dd+'-'+mm2+'-'+yy;
 
-  // ─── iOS / Android: Web Share API หรือแสดงรูปให้กดค้างบันทึก ───
+  // ─── iOS: Web Share API ส่งหลายไฟล์พร้อมกัน → Share Sheet มีปุ่ม "บันทึก X ภาพ" ───
   if(isIOS()){
-    // ลอง Web Share API ก่อน (iOS 15+)
     if(navigator.canShare){
       try{
         const files=[];
-        for(const item of canvases){
+        for(let i=0;i<canvases.length;i++){
+          const item=canvases[i];
           const blob=await new Promise(res=>item.cv.toBlob(res,'image/png'));
-          files.push(new File([blob],'ราคา_'+item.title+'_'+dateTag+'.png',{type:'image/png'}));
+          files.push(new File([blob],(i+1)+'_ราคา_'+item.title+'_'+dateTag+'.png',{type:'image/png'}));
         }
         if(navigator.canShare({files})){
           await navigator.share({files,title:'ราคาสินค้า '+shopInfo.line1});
           return;
         }
       }catch(e){
-        if(e.name==='AbortError')return; // ผู้ใช้กดยกเลิก
+        if(e.name==='AbortError')return;
         console.warn('Web Share failed:',e);
-        // fall through to modal
       }
     }
-    // Fallback: แสดงรูปในหน้า ให้ผู้ใช้กดค้างบันทึก
+    // Fallback: แสดงทุกภาพ ให้กดค้างบันทึกทีละภาพ
     const modal=document.getElementById('iosModal');
     const imgCont=document.getElementById('iosImgs');
     imgCont.innerHTML='';
+    modal.querySelector('div[style*="font-size:15px"]').innerHTML=
+      '📲 กดค้างที่รูปเพื่อ <strong style="color:#7cf">"บันทึกรูปภาพ"</strong><br>'
+      +'<span style="font-size:12px;font-weight:400;opacity:.7">บันทึกทีละหมวด จำนวน '+canvases.length+' ภาพ</span>';
     canvases.forEach(item=>{
       const wrap=document.createElement('div');
       const lbl=document.createElement('div');
@@ -976,40 +976,21 @@ async function doExportSelected(){
       const img=document.createElement('img');
       img.src=item.cv.toDataURL('image/png');
       img.style.cssText='width:100%;border-radius:10px;display:block;box-shadow:0 4px 20px rgba(0,0,0,.5);-webkit-touch-callout:default';
-      wrap.appendChild(lbl);
-      wrap.appendChild(img);
+      wrap.appendChild(lbl);wrap.appendChild(img);
       imgCont.appendChild(wrap);
     });
     modal.style.display='flex';
     return;
   }
 
-  // ─── Desktop: download ตามปกติ ───
-  if(canvases.length===1){
-    // ดาวน์โหลดเดี่ยว
+  // ─── Desktop / Android: ดาวน์โหลดทีละไฟล์ ───
+  for(let i=0;i<canvases.length;i++){
+    const item=canvases[i];
     const a=document.createElement('a');
-    a.href=canvases[0].cv.toDataURL('image/png');
-    a.download='ราคา_'+canvases[0].title+'_'+dateTag+'.png';
+    a.href=item.cv.toDataURL('image/png');
+    a.download=(i+1)+'_ราคา_'+item.title+'_'+dateTag+'.png';
     a.click();
-  } else {
-    // หลายหมวด → ZIP
-    ovMsg.textContent='📦 กำลังบีบอัด ZIP...';
-    ovSub.textContent='';
-    ov.style.display='flex';
-    const zip=new JSZip();
-    canvases.forEach((item,i)=>{
-      const b64=item.cv.toDataURL('image/png').split(',')[1];
-      const name=(i+1).toString().padStart(2,'0')+'_'+item.title+'_'+dateTag+'.png';
-      zip.file(name,b64,{base64:true});
-    });
-    const blob=await zip.generateAsync({type:'blob'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='ราคาสินค้า_'+dateTag+'.zip';
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(url),5000);
-    ov.style.display='none';
+    await new Promise(r=>setTimeout(r,300));
   }
 }
 
@@ -1182,6 +1163,8 @@ function openA4(){
 }
 
 render();
+// โหลดจาก Sheets ทันทีทุกครั้งที่เปิดหน้า
+loadFromSheets(false);
 </script>
 </body>
 </html>
