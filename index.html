@@ -524,70 +524,77 @@ async function loadFromSheets(silent=false){
     }
     if(!newCats.length) throw new Error('ไม่พบหมวดหมู่ใน Sheet — ตรวจสอบ Sheet "⚙️ หมวดหมู่"');
 
-    // 2. Load each category data sheet
+    // 2. Load each category data sheet — โหลดทุกชีตพร้อมกัน (parallel)
+    if(!silent){msg.textContent='📦 กำลังโหลด '+newCats.length+' หมวดพร้อมกัน...';sub.textContent='กรุณารอสักครู่';}
+    else{syncBar.textContent='🔄 กำลังโหลด '+newCats.length+' หมวด...';}
+
+    const sheetResults=await Promise.all(
+      newCats.map(cat=>gsFetch(cat.title).catch(e=>{
+        console.warn('skip sheet:',cat.title,e.message);
+        return null; // null = โหลดไม่ได้ ใช้ DEF fallback แทน
+      }))
+    );
+
     for(let ci=0;ci<newCats.length;ci++){
       const cat=newCats[ci];
-      // ใช้แค่ชื่อหมวด (ไม่มี emoji) ให้ตรงกับชื่อ tab ใน Google Sheets
-      const sName=cat.title;
-      if(!silent){msg.textContent='📦 โหลด '+cat.icon+' '+cat.title;sub.textContent='('+(ci+1)+'/'+newCats.length+')';}
-      else{syncBar.textContent='🔄 โหลด '+cat.icon+' '+cat.title+' ('+(ci+1)+'/'+newCats.length+')';}
+      const d=sheetResults[ci];
 
-      try{
-        const d=await gsFetch(sName);
-        // ตรวจจับว่าได้รับ config sheet กลับมาแทน product sheet
-        const firstVal=(d.rows.length>0?(d.rows[0][0]||''):'').trim();
-        const isConfigData=(d.headers[0]||'')==='id'||firstVal==='id';
-
-        // ถ้าเป็นหมวดใหม่ที่ไม่มีใน DEF (cols ว่าง) ให้สร้าง cols อัตโนมัติจาก header ของ sheet
-        if(!isConfigData&&cat.cols.length===0){
-          // หา header row — อาจอยู่ใน d.headers หรือ d.rows[0]
-          let hRow=d.headers;
-          let skipFirst=false;
-          if(!(d.headers[0]||'').trim()||(d.headers[0]||'').trim().length<=2){
-            // gviz ไม่แยก header → rows[0] คือ header
-            hRow=d.rows[0]||[];
-            skipFirst=true;
-          }
-          // กรองออกแค่คอลัมข้อมูลจริง (ไม่เอา ประเภทแถว / สีพื้นหลัง)
-          const skip=/ประเภทแถว|data\/sep|สีพื้นหลัง|#rrggbb|#rr/i;
-          const dataH=hRow.filter(h=>h&&h.trim()&&!skip.test(h));
-          const vcD=['','v-set','v-cond','v-retail','v-crate','v-rate'];
-          const isBrand=cat.type==='brand';
-          cat.cols=dataH.map((h,i)=>({
-            k:i===0&&isBrand?'brand':'c'+i,
-            lb:h.trim(),
-            w:i===0?(isBrand?'20%':'38%'):'15%',
-            al:i===0?1:0,
-            vc:i===0&&isBrand?'brand-cell':(vcD[i]||'')
-          }));
-          if(skipFirst)d.rows=d.rows.slice(1);
-        }
-
-        const nCols=cat.cols.length;
-        if(!isConfigData){
-          for(const r of d.rows){
-            if(r.every(v=>!v))continue; // skip fully empty rows
-            const _type=(r[nCols]||'data').trim().toLowerCase();
-            const _bg=(r[nCols+1]||'').trim();
-            if(_type==='sep'){
-              cat.rows.push({_s:1,_lb:r[0]||'',_bg});
-            }else{
-              const obj={_bg};
-              cat.cols.forEach((col,idx)=>{
-                const val=(r[idx]||'').trim();
-                if(!val||val===''||val==='-'||val==='—'){obj[col.k]=val||'-';}
-                else{
-                  const n=parseFloat(val);
-                  obj[col.k]=(!isNaN(n)&&/^-?[\d.]+$/.test(val))?n:val;
-                }
-              });
-              cat.rows.push(obj);
-            }
-          }
-        }
-      }catch(ex){
-        console.warn('skip sheet:',sName,ex.message);
+      if(!d){
+        // โหลดไม่ได้ → ใช้ข้อมูล DEF เป็น fallback
+        const fb=DEF.find(c=>c.id===cat.id)||DEF.find(c=>c.title===cat.title);
+        if(fb)cat.rows=JSON.parse(JSON.stringify(fb.rows));
+        continue;
       }
+
+      // ตรวจจับว่าได้รับ config sheet กลับมาแทน product sheet
+      const firstVal=(d.rows.length>0?(d.rows[0][0]||''):'').trim();
+      const isConfigData=(d.headers[0]||'')==='id'||firstVal==='id';
+
+      // ถ้าเป็นหมวดใหม่ที่ไม่มีใน DEF (cols ว่าง) ให้สร้าง cols อัตโนมัติจาก header ของ sheet
+      if(!isConfigData&&cat.cols.length===0){
+        let hRow=d.headers;
+        let skipFirst=false;
+        if(!(d.headers[0]||'').trim()||(d.headers[0]||'').trim().length<=2){
+          hRow=d.rows[0]||[];
+          skipFirst=true;
+        }
+        const skip=/ประเภทแถว|data\/sep|สีพื้นหลัง|#rrggbb|#rr/i;
+        const dataH=hRow.filter(h=>h&&h.trim()&&!skip.test(h));
+        const vcD=['','v-set','v-cond','v-retail','v-crate','v-rate'];
+        const isBrand=cat.type==='brand';
+        cat.cols=dataH.map((h,i)=>({
+          k:i===0&&isBrand?'brand':'c'+i,
+          lb:h.trim(),
+          w:i===0?(isBrand?'20%':'38%'):'15%',
+          al:i===0?1:0,
+          vc:i===0&&isBrand?'brand-cell':(vcD[i]||'')
+        }));
+        if(skipFirst)d.rows=d.rows.slice(1);
+      }
+
+      const nCols=cat.cols.length;
+      if(!isConfigData){
+        for(const r of d.rows){
+          if(r.every(v=>!v))continue;
+          const _type=(r[nCols]||'data').trim().toLowerCase();
+          const _bg=(r[nCols+1]||'').trim();
+          if(_type==='sep'){
+            cat.rows.push({_s:1,_lb:r[0]||'',_bg});
+          }else{
+            const obj={_bg};
+            cat.cols.forEach((col,idx)=>{
+              const val=(r[idx]||'').trim();
+              if(!val||val===''||val==='-'||val==='—'){obj[col.k]=val||'-';}
+              else{
+                const n=parseFloat(val);
+                obj[col.k]=(!isNaN(n)&&/^-?[\d.]+$/.test(val))?n:val;
+              }
+            });
+            cat.rows.push(obj);
+          }
+        }
+      }
+
       // ถ้าไม่ได้รับข้อมูล product ให้ใช้ข้อมูล DEF เป็น fallback
       if(cat.rows.length===0){
         const fb=DEF.find(c=>c.id===cat.id)||DEF.find(c=>c.title===cat.title);
@@ -1255,8 +1262,8 @@ function openA4(){
 }
 
 render();
-// โหลดจาก Sheets ทันทีทุกครั้งที่เปิดหน้า
-loadFromSheets(false);
+// แสดง cache จาก localStorage ทันที แล้วค่อยอัพเดตจาก Sheets เบื้องหลัง (silent)
+setTimeout(()=>loadFromSheets(true),300);
 </script>
 </body>
 </html>
