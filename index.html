@@ -524,16 +524,22 @@ async function loadFromSheets(silent=false){
     }
     if(!newCats.length) throw new Error('ไม่พบหมวดหมู่ใน Sheet — ตรวจสอบ Sheet "⚙️ หมวดหมู่"');
 
-    // 2. Load each category data sheet — โหลดทุกชีตพร้อมกัน (parallel)
-    if(!silent){msg.textContent='📦 กำลังโหลด '+newCats.length+' หมวดพร้อมกัน...';sub.textContent='กรุณารอสักครู่';}
-    else{syncBar.textContent='🔄 กำลังโหลด '+newCats.length+' หมวด...';}
-
-    const sheetResults=await Promise.all(
-      newCats.map(cat=>gsFetch(cat.title).catch(e=>{
-        console.warn('skip sheet:',cat.title,e.message);
-        return null; // null = โหลดไม่ได้ ใช้ DEF fallback แทน
-      }))
-    );
+    // 2. Load each category data sheet — โหลดแบบ batch ทีละ 4 ชีตพร้อมกัน
+    const BATCH=4;
+    const sheetResults=new Array(newCats.length).fill(null);
+    for(let b=0;b<newCats.length;b+=BATCH){
+      const slice=newCats.slice(b,b+BATCH);
+      const loaded=Math.min(b+BATCH,newCats.length);
+      if(!silent){msg.textContent='📦 โหลด '+loaded+' / '+newCats.length+' หมวด...';sub.textContent='กรุณารอสักครู่';}
+      else{syncBar.textContent='🔄 โหลด '+loaded+'/'+newCats.length+' หมวด...';}
+      const batchRes=await Promise.all(
+        slice.map(cat=>gsFetch(cat.title).catch(e=>{
+          console.warn('skip sheet:',cat.title,e.message);
+          return null;
+        }))
+      );
+      batchRes.forEach((r,j)=>{sheetResults[b+j]=r;});
+    }
 
     for(let ci=0;ci<newCats.length;ci++){
       const cat=newCats[ci];
