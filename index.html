@@ -1268,8 +1268,6 @@ function openA4(){
 }
 
 render();
-// ถ้ามี cache อยู่แล้ว → แสดงทันทีแล้วอัพเดต Sheets เบื้องหลัง (เร็ว)
-// ถ้าไม่มี cache (เปิดครั้งแรก / เครื่องใหม่) → โหลดแบบเต็มพร้อม overlay
-const _hasCached=!!localStorage.getItem('priceV6');
-setTimeout(()=>loadFromSheets(_hasCached),300);
+// โหลดจาก Sheets ทุกครั้ง (overlay แสดง) แต่เร็วกว่าเดิมเพราะโหลด batch 4 ชีตพร้อมกัน
+loadFromSheets(false);
 </scrip
