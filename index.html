@@ -1262,6 +1262,8 @@ function openA4(){
 }
 
 render();
-// แสดง cache จาก localStorage ทันที แล้วค่อยอัพเดตจาก Sheets เบื้องหลัง (silent)
-setTimeout(()=>loadFromSheets(true),300);
+// ถ้ามี cache อยู่แล้ว → แสดงทันทีแล้วอัพเดต Sheets เบื้องหลัง (เร็ว)
+// ถ้าไม่มี cache (เปิดครั้งแรก / เครื่องใหม่) → โหลดแบบเต็มพร้อม overlay
+const _hasCached=!!localStorage.getItem('priceV6');
+setTimeout(()=>loadFromSheets(_hasCached),300);
 </scrip
