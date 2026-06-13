@@ -267,13 +267,13 @@ tr.sep-row td{font-weight:800;font-size:13px;color:#444;padding:5px 12px;border-
 <!-- Export Modal -->
 <div id="expModal">
   <div id="expBox">
-    <h3>📸 เลือกหมวดที่จะส่ง LINE</h3>
+    <h3>📸 เลือกหมวดที่จะบันทึกภาพ</h3>
     <div class="exp-all-row">
       <label><input type="checkbox" class="exp-cb" id="expAllCb" onchange="toggleExpAll(this)"> ✅ เลือกทั้งหมด</label>
     </div>
     <div id="expList"></div>
     <div class="bk-btns">
-      <button class="bk-btn bk-copy" onclick="doExportSelected()">📸 ส่ง LINE</button>
+      <button class="bk-btn bk-copy" onclick="doExportSelected()">📸 บันทึกภาพ</button>
       <button class="bk-btn bk-close" onclick="closeExp()">ยกเลิก</button>
     </div>
   </div>
@@ -380,7 +380,7 @@ tr.sep-row td{font-weight:800;font-size:13px;color:#444;padding:5px 12px;border-
 
 
 <div id="toolbar">
-  <button class="tbtn tbtn-line" onclick="openExp()">📸 ส่ง LINE</button>
+  <button class="tbtn tbtn-line" onclick="openExp()">📸 บันทึกภาพ</button>
   <button class="tbtn tbtn-a4"  onclick="openA4()">🖨️ ใบราคา A4</button>
   <button class="tbtn" style="background:linear-gradient(135deg,#0f9d58,#137333);color:#fff" id="gsBtn" onclick="loadFromSheets(false)">🔄 โหลดจาก Sheets</button>
 </div>
@@ -830,7 +830,7 @@ function restoreRowspanHeights(data){
 }
 
 // ══════════════════════════════════════════════
-//  EXPORT — ส่ง LINE
+//  EXPORT — บันทึกภาพ
 // ══════════════════════════════════════════════
 function openExp(){
   // สร้าง checkbox list ของทุก category
@@ -861,10 +861,10 @@ function openExp(){
     if(shareBtn){shareBtn.textContent='⏳ กำลังเตรียม...';shareBtn.disabled=true;}
     _preRenderAllFiles().then(()=>{
       _expPrebuiltBusy=false;
-      if(shareBtn){shareBtn.textContent='📸 ส่ง LINE';shareBtn.disabled=false;}
+      if(shareBtn){shareBtn.textContent='📸 บันทึกภาพ';shareBtn.disabled=false;}
     }).catch(()=>{
       _expPrebuiltBusy=false;
-      if(shareBtn){shareBtn.textContent='📸 ส่ง LINE';shareBtn.disabled=false;}
+      if(shareBtn){shareBtn.textContent='📸 บันทึกภาพ';shareBtn.disabled=false;}
     });
   }
 }
@@ -1264,6 +1264,4 @@ function openA4(){
 render();
 // แสดง cache จาก localStorage ทันที แล้วค่อยอัพเดตจาก Sheets เบื้องหลัง (silent)
 setTimeout(()=>loadFromSheets(true),300);
-</script>
-</body>
-</html>
+</scrip
